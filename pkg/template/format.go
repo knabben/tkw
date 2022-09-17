@@ -15,7 +15,7 @@ const (
 )
 
 var (
-	columns     = []table.Column{{Title: "ID", Width: 50}, {Title: "Value", Width: 40}}
+	columns     = []table.Column{{Title: "ID", Width: 50}, {Title: "Value", Width: 41}}
 	parseMargin = parsePadding
 )
 
