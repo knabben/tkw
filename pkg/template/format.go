@@ -19,21 +19,20 @@ var (
 	parseMargin = parsePadding
 )
 
-var baseStyle = lipgloss.NewStyle().
+var BaseStyle = lipgloss.NewStyle().
 	BorderStyle(lipgloss.NormalBorder()).
 	BorderForeground(lipgloss.Color("240"))
 
-var messageStyle = lipgloss.NewStyle().
+var MessageStyle = lipgloss.NewStyle().
 	Foreground(lipgloss.Color("#fff")).
 	BorderForeground(lipgloss.Color("#f0f0")).
 	Align(lipgloss.Center).
 	Height(5).
 	Width(100).
-	Margin(parseMargin("0 2")).
-	Padding(parsePadding("0 4 4 0")).
+	Margin(parseMargin("2 2 2 2")).
 	Bold(true)
 
-var titleStyle = lipgloss.NewStyle().
+var TitleStyle = lipgloss.NewStyle().
 	Foreground(lipgloss.Color("#fff")).
 	BorderForeground(lipgloss.Color("211")).
 	Align(lipgloss.Center).

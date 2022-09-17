@@ -17,11 +17,11 @@ func (m model) Init() tea.Cmd { return nil }
 func (m model) View() string {
 	var style string
 	if m.rows == 0 {
-		style = messageStyle.Render("No properties exists on this template.")
+		style = MessageStyle.Render("No properties exists on this template.")
 	} else {
-		style = baseStyle.Render(m.table.View())
+		style = BaseStyle.Render(m.table.View())
 	}
-	return fmt.Sprintf("%s\n%s\n", titleStyle.Render(m.title), style)
+	return fmt.Sprintf("%s\n%s\n", TitleStyle.Render(m.title), style)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

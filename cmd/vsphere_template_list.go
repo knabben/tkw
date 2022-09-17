@@ -40,6 +40,9 @@ var templateListCmd = &cobra.Command{
 
 		// Connecting vSphere server with configuration.
 		var client vsphere.Client
+		message := fmt.Sprintf("Connecting to the vSphere server... %s", mapper.Get(VsphereServer))
+		tmpStyle := template.BaseStyle.Copy()
+		fmt.Println(tmpStyle.Padding(3, 2, 3, 2).Render(message))
 		if client, err = connectVCAndLogin(mapper); err != nil {
 			config.ExplodeGraceful(err)
 		}
@@ -58,8 +61,8 @@ var templateListCmd = &cobra.Command{
 
 		// Iterate on VMS and print table by VM
 		for _, vm := range vms {
-			properties := client.GetVMMetadata(&vm)
 			title := fmt.Sprintf("Template: %s", vm.Name)
+			properties := client.GetVMMetadata(&vm)
 			if err = template.RenderTable(properties, title); err != nil {
 				config.ExplodeGraceful(err)
 			}
