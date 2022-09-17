@@ -1,4 +1,4 @@
-# <img src="https://upload.wikimedia.org/wikipedia/commons/8/87/Windows_logo_-_2021.svg" data-canonical-src="https://upload.wikimedia.org/wikipedia/commons/8/87/Windows_logo_-_2021.svg" width="4%"/>  Tanzu Kubernetes Grid Windows Toolbox <img src="https://upload.wikimedia.org/wikipedia/commons/3/39/Kubernetes_logo_without_workmark.svg" data-canonical-src="https://upload.wikimedia.org/wikipedia/commons/3/39/Kubernetes_logo_without_workmark.svg" width="4%"/>
+# <img src="https://upload.wikimedia.org/wikipedia/commons/8/87/Windows_logo_-_2021.svg" data-canonical-src="https://upload.wikimedia.org/wikipedia/commons/8/87/Windows_logo_-_2021.svg" width="3%"/>   <img src="https://avatars.githubusercontent.com/u/54452117?s=200&v=4" data-canonical-src="https://avatars.githubusercontent.com/u/54452117?s=200&v=4" width="3%"/> Tanzu Kubernetes Grid Windows Toolbox
 
 
 ## vSphere Windows Image Build
