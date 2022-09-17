@@ -5,19 +5,9 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"net/url"
-	"strings"
 	"tkw/pkg/config"
 	"tkw/pkg/template"
 	"tkw/pkg/vsphere"
-)
-
-const (
-	VsphereTlsThumbprint = "VSPHERE_TLS_THUMBPRINT"
-	VsphereUsername      = "VSPHERE_USERNAME"
-	VspherePassword      = "VSPHERE_PASSWORD"
-	VsphereServer        = "VSPHERE_SERVER"
-	VsphereDataCenter    = "VSPHERE_DATACENTER"
 )
 
 func init() {
@@ -33,22 +23,13 @@ var templateListCmd = &cobra.Command{
 		ctx := context.Background()
 
 		// Loading configuration on a mapper object.
-		mapper, err := loadConfig()
+		mapper, err := config.LoadConfig(viper.GetString("config"))
 		if err != nil {
 			config.ExplodeGraceful(err)
 		}
 
-		// Connecting vSphere server with configuration.
-		var client vsphere.Client
-		message := fmt.Sprintf("Connecting to the vSphere server... %s", mapper.Get(VsphereServer))
-		tmpStyle := template.BaseStyle.Copy()
-		fmt.Println(tmpStyle.Padding(3, 2, 3, 2).Render(message))
-		if client, err = connectVCAndLogin(mapper); err != nil {
-			config.ExplodeGraceful(err)
-		}
-
-		// Search for existent Datacenter.
-		dcMOID, err := mapper.FilterDatacenter(ctx, client, mapper.Get(VsphereDataCenter))
+		// Connect and filter DataCenter.
+		client, dcMOID, err := vsphere.ConnectAndFilterDC(ctx, mapper)
 		if err != nil {
 			config.ExplodeGraceful(err)
 		}
@@ -60,46 +41,12 @@ var templateListCmd = &cobra.Command{
 		}
 
 		// Iterate on VMS and print table by VM
-		for _, vm := range vms {
-			title := fmt.Sprintf("Template: %s", vm.Name)
+		for i, vm := range vms {
+			title := fmt.Sprintf("[%d] Template: %s", i, vm.Name)
 			properties := client.GetVMMetadata(&vm)
 			if err = template.RenderTable(properties, title); err != nil {
 				config.ExplodeGraceful(err)
 			}
 		}
 	},
-}
-
-// connectVCAndLogin returns the logged client.
-func connectVCAndLogin(mapper *template.Mapper) (vsphere.Client, error) {
-	var ctx = context.Background()
-	host := mapper.Get(VsphereServer)
-	if !strings.HasPrefix(host, "http") {
-		host = "https://" + host
-	}
-
-	vc, err := url.Parse(host)
-	if err != nil {
-		return nil, err
-	}
-	vc.Path = "/sdk"
-	vcClient, err := vsphere.NewClient(vc, mapper.Get(VsphereTlsThumbprint), false)
-	if err != nil {
-		return nil, err
-	}
-	_, err = vcClient.Login(ctx, mapper.Get(VsphereUsername), mapper.Get(VspherePassword))
-	if err != nil {
-		return nil, err
-	}
-
-	return vcClient, nil
-}
-
-// loadConfig returns the mapper object from config
-func loadConfig() (mapper *template.Mapper, err error) {
-	viperConfig := viper.GetString("config")
-	if mapper, err = config.ConvertConfigIntoMap(viperConfig); err != nil {
-		return nil, err
-	}
-	return
 }

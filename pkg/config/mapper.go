@@ -4,12 +4,29 @@ import (
 	"bufio"
 	"os"
 	"strings"
-	"tkw/pkg/template"
 )
 
+type Mapper map[string]string
+
+func (m Mapper) Get(key string) string {
+	return m[key]
+}
+
+func (m Mapper) Set(key, value string) {
+	m[key] = value
+}
+
+// LoadConfig returns the mapper object from config
+func LoadConfig(config string) (mapper *Mapper, err error) {
+	if mapper, err = ConvertConfigIntoMap(config); err != nil {
+		return nil, err
+	}
+	return
+}
+
 // ConvertConfigIntoMap returns a mapping for a key value configuration file
-func ConvertConfigIntoMap(path string) (*template.Mapper, error) {
-	var mappers template.Mapper = map[string]string{}
+func ConvertConfigIntoMap(path string) (*Mapper, error) {
+	var mappers Mapper = map[string]string{}
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return nil, err

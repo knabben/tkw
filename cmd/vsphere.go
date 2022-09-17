@@ -23,5 +23,7 @@ var vsphereCmd = &cobra.Command{
 
 func init() {
 	vsphereCmd.PersistentFlags().String("config", "c", "Path for the vSphere configuration file.")
+	vsphereCmd.PersistentFlags().String("kubeconfig", "k", "Path Kubernetes configuration file.")
 	viper.BindPFlag("config", vsphereCmd.PersistentFlags().Lookup("config"))
+	viper.BindPFlag("kubeconfig", vsphereCmd.PersistentFlags().Lookup("kubeconfig"))
 }
