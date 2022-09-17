@@ -16,8 +16,7 @@ ATM the tool support creating a new Windows OVA using
 extracting existent template information, can be used to debug template information and properties
 after the build or any other existent one.
 
-## vSphere Windows Image Buildo
-
+## vSphere Windows Image Builder
 
 Build a Windows OVA with working defaults.
 

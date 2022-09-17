@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"k8s.io/klog/v2"
 	"os"
 	"time"
 )
@@ -76,7 +77,7 @@ func ExplodeGraceful(err error) {
 		err:   err,
 	}
 	if err := tea.NewProgram(m).Start(); err != nil {
-		fmt.Println("Uh oh, we encountered an error:", err)
-		os.Exit(1)
+		klog.Error("Uh oh, we encountered an error:", err)
 	}
+	os.Exit(1)
 }

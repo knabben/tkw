@@ -1,7 +1,3 @@
-// Copyright 2021 VMware, Inc. All Rights Reserved.
-// SPDX-License-Identifier: Apache-2.0
-
-// Package vc ...
 package vsphere
 
 import (
@@ -11,13 +7,8 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 	"net/url"
 	"strings"
-	"time"
 	"tkw/pkg/config"
 	"tkw/pkg/template"
-)
-
-const (
-	dialTCPTimeout = 5 * time.Second
 )
 
 func ConnectAndFilterDC(ctx context.Context, mapper *config.Mapper) (Client, string, error) {
