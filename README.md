@@ -18,6 +18,9 @@ after the build or any other existent one.
 
 ## vSphere Windows Image Builder
 
+<img src="https://user-images.githubusercontent.com/1223213/190880625-527893bb-c42f-4ca9-b85b-6b9d2d68f133.png" data-canonical-src="https://user-images.githubusercontent.com/1223213/190880625-527893bb-c42f-4ca9-b85b-6b9d2d68f133.png" width="80%" />
+
+
 Build a Windows OVA with working defaults.
 
 ```shell
@@ -31,7 +34,6 @@ $ tkw vsphere template build \
 NOTE: Manual steps are provided [here](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.6/vmware-tanzu-kubernetes-grid-16/GUID-build-images-windows.html).
 
 ## vSphere Template List
-
 
 <img src="https://user-images.githubusercontent.com/1223213/190836839-c6791eff-f109-4a30-821d-64f68c18c0b8.png" data-canonical-src="https://user-images.githubusercontent.com/1223213/190836839-c6791eff-f109-4a30-821d-64f68c18c0b8.png" width="50%" />
 
