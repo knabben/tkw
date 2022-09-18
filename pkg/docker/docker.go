@@ -79,7 +79,7 @@ func (d *Docker) Run(ctx context.Context) (string, error) {
 
 // GetLogs extract the logs
 func (d *Docker) GetLogs(ctx context.Context, containerID string) (string, error) {
-	opts := types.ContainerLogsOptions{ShowStdout: true}
+	opts := types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true}
 	src, err := d.Client.ContainerLogs(ctx, containerID, opts)
 	if err != nil {
 		return "", err
@@ -87,7 +87,7 @@ func (d *Docker) GetLogs(ctx context.Context, containerID string) (string, error
 
 	if src != nil {
 		dst := &bytes.Buffer{}
-		stdcopy.StdCopy(dst, nil, src)
+		stdcopy.StdCopy(dst, dst, src)
 		return dst.String(), nil
 	}
 
