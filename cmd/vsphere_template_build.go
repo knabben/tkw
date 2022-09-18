@@ -16,7 +16,6 @@ import (
 
 func init() {
 	templateCmd.AddCommand(templateBuildCmd)
-
 	templateBuildCmd.PersistentFlags().String("isopath", "i", "The Windows iso file path.")
 	templateBuildCmd.PersistentFlags().String("vmtoolspath", "v", "The vmware tools iso file path.")
 	viper.BindPFlag("isopath", templateBuildCmd.PersistentFlags().Lookup("isopath"))
@@ -49,7 +48,7 @@ vSphere server.`,
 		client, err := windows.NewKubernetesClient(kubeconfig)
 		config.ExplodeGraceful(err)
 
-		msg = fmt.Sprintf("Creating Windows Image-Builder resources on %s default context", kubeconfig)))
+		msg = fmt.Sprintf("Creating Windows Image-Builder resources on %s default context", kubeconfig)
 		klog.Info(template.Info(msg))
 		err = client.CreateWindowsResources(ctx)
 		config.ExplodeGraceful(err)
@@ -94,25 +93,27 @@ func findOrUploadISOs(ctx context.Context, mapper *config.Mapper) error {
 		return err
 	}
 
-	obj, err := client.FindDatastore(ctx, dc.Name, ds)
+	dataStore, err := client.FindDatastore(ctx, dc.Name, ds)
 	if err != nil {
 		return err
 	}
 
-	// Upload vmtoolspath first.
-	var vmtoolspath = viper.GetString("vmtoolspath")
-	klog.Info(template.Info(fmt.Sprintf("Uploading vmtoolspath: %s", vmtoolspath)))
-	err = client.Upload(ctx, vmtoolspath, filepath.Base(vmtoolspath), obj)
-	if err != nil {
-		return err
+	// Upload vmtools and ISO to datastore.
+	for _, src := range []string{viper.GetString("vmtoolspath"), viper.GetString("isopath")} {
+		dst := filepath.Base(src)
+
+		klog.Info(template.Info(fmt.Sprintf("Uploading %s to %s on %s", src, dst, ds)))
+		if exists, err := vsphere.FileExists(dataStore, dst); err != nil {
+			return nil
+		} else if !exists {
+			err = client.Upload(ctx, src, dst, dataStore)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
-	var isopath = viper.GetString("isopath")
-	klog.Info(template.Info(fmt.Sprintf("Uploading isopath: %s", isopath)))
-	err = client.Upload(ctx, isopath, filepath.Base(isopath), obj)
-	if err != nil {
-		return err
-	}
+	return nil
 }
 
 func monitorOutput(cli *docker.Docker, containerID string) error {
