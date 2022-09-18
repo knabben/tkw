@@ -1,5 +1,4 @@
-# <img src="https://upload.wikimedia.org/wikipedia/commons/8/87/Windows_logo_-_2021.svg" data-canonical-src="https://upload.wikimedia.org/wikipedia/commons/8/87/Windows_logo_-_2021.svg" width="3%"/>   <img src="https://avatars.githubusercontent.com/u/54452117?s=200&v=4" data-canonical-src="https://avatars.githubusercontent.com/u/54452117?s=200&v=4" width="3%"/> Tanzu Kubernetes Grid Windows Toolkit
-
+# Tanzu Kubernetes Grid Windows Toolkit <img src="https://upload.wikimedia.org/wikipedia/commons/8/87/Windows_logo_-_2021.svg" data-canonical-src="https://upload.wikimedia.org/wikipedia/commons/8/87/Windows_logo_-_2021.svg" width="3%"/>   <img src="https://avatars.githubusercontent.com/u/54452117?s=200&v=4" data-canonical-src="https://avatars.githubusercontent.com/u/54452117?s=200&v=4" width="3%"/> 
 This toolkit is a bunch of helpers functions to extract data or automatize OVA
 Windows template on vSphere environments. It's better used in conjunction with
 [TKGm](https://github.com/vmware-tanzu/tanzu-framework) <= *1.6*. The following 
