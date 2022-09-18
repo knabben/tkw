@@ -20,7 +20,6 @@ after the build or any other existent one.
 
 <img src="https://user-images.githubusercontent.com/1223213/190880625-527893bb-c42f-4ca9-b85b-6b9d2d68f133.png" data-canonical-src="https://user-images.githubusercontent.com/1223213/190880625-527893bb-c42f-4ca9-b85b-6b9d2d68f133.png" width="80%" />
 
-
 Build a Windows OVA with working defaults.
 
 ```shell
@@ -44,3 +43,8 @@ vApp properties defined for the template run:
 ```shell
 $ tkw vsphere template list --config=${PWD}/examples/mgmt.yaml
 ```
+
+### Comprehensive error messages
+
+<img src="https://user-images.githubusercontent.com/1223213/190880694-1b615449-743a-4cd7-8dd0-2ca761e2667d.png" width="50%" />
+
