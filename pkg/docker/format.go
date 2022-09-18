@@ -4,8 +4,6 @@ import (
 	"context"
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"strings"
 	"time"
 	"tkw/pkg/config"
 )
@@ -50,7 +48,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.err = err
 		}
 		if len(response) >= len(m.content) {
-			m.content = string(response)
+			m.content = response
 		}
 		m.timer, cmd = m.timer.Update(msg)
 		return m, cmd
@@ -70,35 +68,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	if m.err != nil {
 		config.ExplodeGraceful(m.err)
-		return m.content + "\n" + m.footerView()
 	}
 	return m.content
-}
-
-var (
-	titleStyle = func() lipgloss.Style {
-		b := lipgloss.RoundedBorder()
-		return lipgloss.NewStyle().BorderStyle(b).Padding(0, 1)
-	}()
-
-	infoStyle = func() lipgloss.Style {
-		b := lipgloss.RoundedBorder()
-		return titleStyle.Copy().BorderStyle(b)
-	}()
-)
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func (m model) footerView() string {
-	msg := ""
-	if m.err != nil {
-		msg = m.err.Error()
-	}
-	line := strings.Repeat("─", max(0, 100-lipgloss.Width(msg)))
-	return lipgloss.JoinHorizontal(lipgloss.Top, line, msg)
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"k8s.io/klog/v2"
 	"tkw/pkg/config"
 	"tkw/pkg/docker"
 	"tkw/pkg/windows"
@@ -38,31 +37,39 @@ vSphere server.`,
 			config.ExplodeGraceful(err)
 		}
 
+		// Populate Windows configuration and save on temp file
 		var cfg = windows.WindowsConfiguration{}
-		data, err := cfg.PopulateWindowsConfiguration(mapper, viper.GetString("isopath"), viper.GetString("vmtoolspath"))
+		_, err = cfg.PopulateWindowsConfiguration(mapper, viper.GetString("isopath"), viper.GetString("vmtoolspath"))
 		if err != nil {
 			config.ExplodeGraceful(err)
 		}
 
+		// Create a new docker connection.
 		cli, err := docker.NewDockerClient()
 		if err != nil {
 			config.ExplodeGraceful(err)
 		}
 
+		// Run the image-builder container.
 		var containerID string
 		if containerID, err = cli.Run(ctx); err != nil {
 			config.ExplodeGraceful(err)
 		}
 
-		p, err := docker.NewProgram(cli, containerID)
-		if err != nil {
+		// Iterate on logs and print output, monitor for errors.
+		if err := monitorOutput(cli, containerID); err != nil {
 			config.ExplodeGraceful(err)
 		}
-
-		if err := p.Start(); err != nil {
-			config.ExplodeGraceful(err)
-		}
-
-		klog.Info(string(data))
 	},
+}
+
+func monitorOutput(cli *docker.Docker, containerID string) error {
+	p, err := docker.NewProgram(cli, containerID)
+	if err != nil {
+		return err
+	}
+	if err := p.Start(); err != nil {
+		return err
+	}
+	return nil
 }

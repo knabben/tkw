@@ -1,12 +1,13 @@
 package docker
 
 import (
+	"bytes"
 	"context"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
-	"io"
+	"github.com/docker/docker/pkg/stdcopy"
 	"k8s.io/klog/v2"
 	"os"
 	"path/filepath"
@@ -77,15 +78,18 @@ func (d *Docker) Run(ctx context.Context) (string, error) {
 }
 
 // GetLogs extract the logs
-func (d *Docker) GetLogs(ctx context.Context, containerID string) ([]byte, error) {
+func (d *Docker) GetLogs(ctx context.Context, containerID string) (string, error) {
 	opts := types.ContainerLogsOptions{ShowStdout: true}
-	out, err := d.Client.ContainerLogs(ctx, containerID, opts)
+	src, err := d.Client.ContainerLogs(ctx, containerID, opts)
 	if err != nil {
-		return []byte{}, err
+		return "", err
 	}
 
-	if out != nil {
-		return io.ReadAll(out)
+	if src != nil {
+		dst := &bytes.Buffer{}
+		stdcopy.StdCopy(dst, nil, src)
+		return dst.String(), nil
 	}
-	return []byte{}, nil
+
+	return "", nil
 }
