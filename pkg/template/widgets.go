@@ -10,16 +10,27 @@ var (
 		Foreground(lipgloss.Color("#fff")).
 		Background(lipgloss.Color("9")).
 		Bold(true).
-		Padding(2).
+		Padding(1, 3, 1, 3).
 		MarginBottom(1)
 
-	SimpleStyle = lipgloss.NewStyle().Bold(true).MarginBottom(1)
-	titleStyle  = lipgloss.NewStyle().
+	SimpleStyle = lipgloss.NewStyle().
+		Bold(true).
+		MarginTop(1).
+		MarginBottom(1).
+		Foreground(lipgloss.Color("#ADD8E6")).
+		Background(lipgloss.Color("#000")).
+		Padding(1, 3, 1, 3)
+
+	titleStyle = lipgloss.NewStyle().
 		BorderStyle(lipgloss.DoubleBorder()).
 		BorderBottom(true).
 		BorderForeground(Subtle).
 		PaddingTop(2)
 )
+
+func Info(msg string) string {
+	return SimpleStyle.Copy().Render(msg)
+}
 
 func Error(msg string) string {
 	return lipgloss.JoinVertical(lipgloss.Top,

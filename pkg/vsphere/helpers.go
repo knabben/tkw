@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25/types"
+	"k8s.io/klog/v2"
 	"net/url"
 	"strings"
 	"tkw/pkg/config"
@@ -23,7 +24,7 @@ func ConnectAndFilterDC(ctx context.Context, mapper *config.Mapper) (Client, *mo
 	// Connecting vSphere server with configuration.
 	message := fmt.Sprintf("Connecting to the vSphere server... %s", vsphereServer)
 	tmpStyle := template.BaseStyle.Copy()
-	fmt.Println(tmpStyle.Padding(3, 2, 3, 2).Render(message))
+	klog.Info(tmpStyle.Padding(3, 2, 3, 2).Render(message))
 
 	client, err := ConnectVCAndLogin(vsphereServer, vsphereTlsThumbprint, vsphereUsername, vspherePassword)
 	if err != nil {
@@ -64,9 +65,7 @@ func ConnectVCAndLogin(server, tlsThumbprint, username, password string) (Client
 
 func (c *DefaultClient) createContainerView(ctx context.Context, parentID string, viewTypes []string) (*view.ContainerView, error) {
 	m := view.NewManager(c.vmomiClient.Client)
-
 	container := &c.vmomiClient.Client.ServiceContent.RootFolder
-
 	if parentID != "" {
 		container = &types.ManagedObjectReference{}
 		if !container.FromString(parentID) {

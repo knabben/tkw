@@ -8,37 +8,29 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
-	"k8s.io/klog/v2"
-	"os"
-	"path/filepath"
 )
 
 type Docker struct {
-	Client *client.Client
+	WindowsFile string
+	Client      *client.Client
 }
 
 const IMAGE_BUILDER = "projects.registry.vmware.com/tkg/image-builder:v0.1.12_vmware.2"
 
-func NewDockerClient() (*Docker, error) {
-	return connectDocker()
+func NewDockerClient(windows string) (*Docker, error) {
+	return connectDocker(windows)
 }
 
-func connectDocker() (*Docker, error) {
+func connectDocker(windows string) (*Docker, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return nil, err
 	}
-	return &Docker{Client: cli}, nil
+	return &Docker{Client: cli, WindowsFile: windows}, nil
 }
 
-// docker run -it --rm
-// --mount type=bind,source=$(pwd)/windows.json,target=/windows.json
-// --mount type=bind,source=$(pwd)/autounattend.xml,target=/home/imagebuilder/packer/ova/windows/windows-2019/autounattend.xml
-// -e -e
-//-e PACKER_FLAGS='-force -on-error=ask' -t
-//  build-node-ova-vsphere-windows-2019
-
 func (d *Docker) Run(ctx context.Context) (string, error) {
+	// Configuration with image-builder command and debugging flags.
 	config := container.Config{
 		Image: IMAGE_BUILDER,
 		Cmd:   []string{"build-node-ova-vsphere-windows-2019"},
@@ -49,18 +41,15 @@ func (d *Docker) Run(ctx context.Context) (string, error) {
 			"IB_OVFTOOL_ARGS='--skipManifestCheck'",
 		},
 	}
-	pwd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	klog.Info(filepath.Join(pwd, "windows.json"))
+	// Volume mount the Windows json custom configuration.
+	// The user can be able to change anything before using in the future.
 	hostConfig := container.HostConfig{
 		AutoRemove: true,
 		Mounts: []mount.Mount{
 			{
 				Type:   mount.TypeBind,
 				Target: "/home/imagebuilder/windows.json",
-				Source: filepath.Join(pwd, "windows.json"),
+				Source: d.WindowsFile,
 			},
 		},
 	}
