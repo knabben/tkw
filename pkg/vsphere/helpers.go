@@ -9,9 +9,10 @@ import (
 	"strings"
 	"tkw/pkg/config"
 	"tkw/pkg/template"
+	"tkw/pkg/vsphere/models"
 )
 
-func ConnectAndFilterDC(ctx context.Context, mapper *config.Mapper) (Client, string, error) {
+func ConnectAndFilterDC(ctx context.Context, mapper *config.Mapper) (Client, *models.VSphereDatacenter, error) {
 	var client Client
 
 	vsphereServer := mapper.Get(VsphereServer)
@@ -26,15 +27,15 @@ func ConnectAndFilterDC(ctx context.Context, mapper *config.Mapper) (Client, str
 
 	client, err := ConnectVCAndLogin(vsphereServer, vsphereTlsThumbprint, vsphereUsername, vspherePassword)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
 
 	// Search for existent Datacenter.
-	dcMOID, err := FilterDatacenter(ctx, client, mapper.Get(VsphereDataCenter))
+	dc, err := FilterDatacenter(ctx, client, mapper.Get(VsphereDataCenter))
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
-	return client, dcMOID, nil
+	return client, dc, nil
 }
 
 // ConnectVCAndLogin returns the logged client.

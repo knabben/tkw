@@ -84,12 +84,10 @@ func (d *Docker) GetLogs(ctx context.Context, containerID string) (string, error
 	if err != nil {
 		return "", err
 	}
-
 	if src != nil {
 		dst := &bytes.Buffer{}
 		stdcopy.StdCopy(dst, dst, src)
 		return dst.String(), nil
 	}
-
 	return "", nil
 }

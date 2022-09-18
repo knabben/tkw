@@ -29,13 +29,13 @@ var templateListCmd = &cobra.Command{
 		}
 
 		// Connect and filter DataCenter.
-		client, dcMOID, err := vsphere.ConnectAndFilterDC(ctx, mapper)
+		client, dc, err := vsphere.ConnectAndFilterDC(ctx, mapper)
 		if err != nil {
 			config.ExplodeGraceful(err)
 		}
 
 		// Get templates from vSphere and DC.
-		vms, err := client.GetImportedVirtualMachinesImages(ctx, dcMOID)
+		vms, err := client.GetImportedVirtualMachinesImages(ctx, dc.Moid)
 		if err != nil {
 			config.ExplodeGraceful(err)
 		}

@@ -71,6 +71,10 @@ func (m model) View() string {
 }
 
 func ExplodeGraceful(err error) {
+	if err == nil {
+		return
+	}
+
 	m := model{
 		timer: timer.NewWithInterval(timeout, time.Millisecond),
 		help:  help.New(),
@@ -79,5 +83,6 @@ func ExplodeGraceful(err error) {
 	if err := tea.NewProgram(m).Start(); err != nil {
 		klog.Error("Uh oh, we encountered an error:", err)
 	}
+
 	os.Exit(1)
 }

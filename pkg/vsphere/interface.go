@@ -2,6 +2,7 @@ package vsphere
 
 import (
 	"context"
+	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/mo"
 	"tkw/pkg/vsphere/models"
 )
@@ -29,4 +30,6 @@ type Client interface {
 	GetVirtualMachines(ctx context.Context, datacenterMOID string) ([]*models.VSphereVirtualMachine, error)
 	GetVMMetadata(vm *mo.VirtualMachine) (properties map[string]string)
 	GetImportedVirtualMachinesImages(ctx context.Context, datacenterMOID string) ([]mo.VirtualMachine, error)
+	Upload(ctx context.Context, src, dst string, obj *object.Datastore) error
+	FindDatastore(ctx context.Context, dcPath, path string) (*object.Datastore, error)
 }
