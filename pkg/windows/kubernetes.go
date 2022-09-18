@@ -2,6 +2,7 @@ package windows
 
 import (
 	"context"
+	"fmt"
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -9,6 +10,7 @@ import (
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
+	"tkw/pkg/template"
 )
 
 const (
@@ -48,7 +50,7 @@ func (k *Kubernetes) CreateWindowsResources(ctx context.Context) error {
 	// see if ns is already create and skip if so.
 	ns, err := k.Clientset.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
 	if err == nil && ns.GetName() == namespace {
-		klog.Warningf("Namespace %s already exists, skipping resource creation.", namespace)
+		klog.Info(template.Warning(fmt.Sprintf("Namespace %s already exists, skipping resource creation.", namespace)))
 		return nil
 	}
 

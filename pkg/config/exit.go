@@ -9,6 +9,7 @@ import (
 	"k8s.io/klog/v2"
 	"os"
 	"time"
+	"tkw/pkg/template"
 )
 
 var timeout = time.Second * 5
@@ -44,18 +45,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-var (
-	subtle    = lipgloss.AdaptiveColor{Light: "#D9DCCF", Dark: "#383838"}
-	descStyle = lipgloss.NewStyle().MarginTop(1).
-		Foreground(lipgloss.Color("#fff")).
-		Background(lipgloss.Color("9")).
-		Bold(true).Padding(3)
-	infoStyle = lipgloss.NewStyle().
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderTop(true).
-		BorderForeground(subtle)
-)
-
 func (m model) View() string {
 	s := m.timer.View()
 	if m.timer.Timedout() {
@@ -63,8 +52,8 @@ func (m model) View() string {
 	}
 	if !m.quitting {
 		s = lipgloss.JoinVertical(lipgloss.Top,
-			descStyle.Render(m.err.Error()),
-			infoStyle.Render(fmt.Sprintf("exiting in %s", s)),
+			template.Error(m.err.Error()),
+			template.SimpleStyle.Render(fmt.Sprintf("exiting in %s", s)),
 		)
 	}
 	return s
