@@ -395,7 +395,10 @@ func (c *DefaultClient) GetImportedVirtualMachinesImages(ctx context.Context, da
 }
 
 func (c *DefaultClient) GetVMMetadata(vm *mo.VirtualMachine) (properties map[string]string) {
-	if vm.Config == nil && vm.Config.VAppConfig == nil {
+	if vm.Config == nil {
+		return
+	}
+	if vm.Config.VAppConfig == nil {
 		return
 	}
 

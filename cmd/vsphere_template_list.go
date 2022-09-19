@@ -38,7 +38,9 @@ var templateListCmd = &cobra.Command{
 		for i, vm := range vms {
 			title := fmt.Sprintf("[%d] Template: %s", i, vm.Name)
 			properties := client.GetVMMetadata(&vm)
-			config.ExplodeGraceful(template.RenderTable(properties, title))
+			if properties != nil {
+				config.ExplodeGraceful(template.RenderTable(properties, title))
+			}
 		}
 	},
 }
