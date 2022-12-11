@@ -1,51 +1,94 @@
-# Tanzu Kubernetes Grid Windows Toolkit <img src="https://upload.wikimedia.org/wikipedia/commons/8/87/Windows_logo_-_2021.svg" data-canonical-src="https://upload.wikimedia.org/wikipedia/commons/8/87/Windows_logo_-_2021.svg" width="3%"/>   <img src="https://avatars.githubusercontent.com/u/54452117?s=200&v=4" data-canonical-src="https://avatars.githubusercontent.com/u/54452117?s=200&v=4" width="3%"/> 
-This toolkit is a bunch of helpers functions to extract data or automatize OVA
-Windows template on vSphere environments. It's better used in conjunction with
-[TKGm](https://github.com/vmware-tanzu/tanzu-framework) <= *1.6*. The following 
-pre-requisites are required to use this tool:
+# tkw
+// TODO(user): Add simple overview of use/purpose
 
-1. Kubeconfig from the management cluster.
-2. Management cluster YAML configuration.
-3. Access to a Vsphere 7 hypervisor.
-4. Docker running in the local machine.
-5. Windows and VMtools ISO files.
+## Description
+// TODO(user): An in-depth paragraph about your project and overview of use
 
-ATM the tool support creating a new Windows OVA using 
-[image-builder](https://github.com/kubernetes-sigs/image-builder)
-extracting existent template information, can be used to debug template information and properties
-after the build or any other existent one.
+## Getting Started
+You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
+**Note:** Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
 
-NoTE: To leave any screen press `q` or `esc`.
+### Running on the cluster
+1. Install Instances of Custom Resources:
 
-## vSphere Windows Image Builder
-
-<img src="https://user-images.githubusercontent.com/1223213/190880625-527893bb-c42f-4ca9-b85b-6b9d2d68f133.png" data-canonical-src="https://user-images.githubusercontent.com/1223213/190880625-527893bb-c42f-4ca9-b85b-6b9d2d68f133.png" width="80%" />
-
-Build a Windows OVA with working defaults.
-
-```shell
-$ tkw vsphere template build \
-  --config=${PWD}/examples/mgmt.yaml \
-  --kubeconfig=${PWD}/.kube/config \
-  --isopath=${PWD}/examples/isos/windows.iso
-  --vmisopath=${PWD}/examples/isos/vmtools.iso
+```sh
+kubectl apply -f config/samples/
 ```
 
-NOTE: Manual steps are provided [here](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.6/vmware-tanzu-kubernetes-grid-16/GUID-build-images-windows.html).
+2. Build and push your image to the location specified by `IMG`:
+	
+```sh
+make docker-build docker-push IMG=<some-registry>/tkw:tag
+```
+	
+3. Deploy the controller to the cluster with the image specified by `IMG`:
 
-## vSphere Template List
-
-<img src="https://user-images.githubusercontent.com/1223213/190836839-c6791eff-f109-4a30-821d-64f68c18c0b8.png" data-canonical-src="https://user-images.githubusercontent.com/1223213/190836839-c6791eff-f109-4a30-821d-64f68c18c0b8.png" width="50%" />
-
-Make sure your configuration file exists on `examples/mgmt.yaml`, this file is parsed
-and all configuration is mapped internally. To list the existent vSphere templates and 
-vApp properties defined for the template run:
-
-```shell
-$ tkw vsphere template list --config=${PWD}/examples/mgmt.yaml
+```sh
+make deploy IMG=<some-registry>/tkw:tag
 ```
 
-### Comprehensive error messages
+### Uninstall CRDs
+To delete the CRDs from the cluster:
 
-<img src="https://user-images.githubusercontent.com/1223213/190880694-1b615449-743a-4cd7-8dd0-2ca761e2667d.png" width="50%" />
+```sh
+make uninstall
+```
+
+### Undeploy controller
+UnDeploy the controller to the cluster:
+
+```sh
+make undeploy
+```
+
+## Contributing
+// TODO(user): Add detailed information on how you would like others to contribute to this project
+
+### How it works
+This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
+
+It uses [Controllers](https://kubernetes.io/docs/concepts/architecture/controller/) 
+which provides a reconcile function responsible for synchronizing resources untile the desired state is reached on the cluster 
+
+### Test It Out
+1. Install the CRDs into the cluster:
+
+```sh
+make install
+```
+
+2. Run your controller (this will run in the foreground, so switch to a new terminal if you want to leave it running):
+
+```sh
+make run
+```
+
+**NOTE:** You can also run this in one step by running: `make install run`
+
+### Modifying the API definitions
+If you are editing the API definitions, generate the manifests such as CRs or CRDs using:
+
+```sh
+make manifests
+```
+
+**NOTE:** Run `make --help` for more information on all potential `make` targets
+
+More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
+
+## License
+
+Copyright 2022.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 

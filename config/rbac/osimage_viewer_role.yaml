@@ -1,0 +1,20 @@
+# permissions for end users to view osimages.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: osimage-viewer-role
+rules:
+- apiGroups:
+  - imagebuilder.tanzu.opssec.in
+  resources:
+  - osimages
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - imagebuilder.tanzu.opssec.in
+  resources:
+  - osimages/status
+  verbs:
+  - get
