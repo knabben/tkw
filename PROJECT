@@ -1,0 +1,16 @@
+domain: tanzu.opssec.in
+layout:
+- go.kubebuilder.io/v3
+projectName: tkw
+repo: github.com/knabben/tkw
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: tanzu.opssec.in
+  group: imagebuilder
+  kind: OSImage
+  path: github.com/knabben/tkw/api/v1alpha1
+  version: v1alpha1
+version: "3"

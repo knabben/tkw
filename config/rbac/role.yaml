@@ -1,0 +1,33 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - imagebuilder.tanzu.opssec.in
+  resources:
+  - osimages
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - imagebuilder.tanzu.opssec.in
+  resources:
+  - osimages/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - imagebuilder.tanzu.opssec.in
+  resources:
+  - osimages/status
+  verbs:
+  - get
+  - patch
+  - update
