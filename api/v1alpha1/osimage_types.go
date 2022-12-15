@@ -25,17 +25,24 @@ import (
 
 // OSImageSpec defines the desired state of OSImage
 type OSImageSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of OSImage. Edit osimage_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
 }
 
 // OSImageStatus defines the observed state of OSImage
 type OSImageStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	OSTemplates []OSImageTemplates
+}
+
+type OSImageTemplates struct {
+	BuildDate            string `json:"build_date,omitempty"`
+	BuildTimestamp       string `json:"build_timestamp,omitempty"`
+	CNIVersion           string `json:"cni_version,omitempty"`
+	ContainerDVersion    string `json:"containerd_version,omitempty"`
+	DistroArch           string `json:"distro_arch,omitempty"`
+	DistroName           string `json:"distro_name,omitempty"`
+	DistroVersion        string `json:"distro_version,omitempty"`
+	ImageBuilderVersion  string `json:"image_builder_version,omitempty"`
+	KubernetesSemVer     string `json:"kubernetes_sem_ver,omitempty"`
+	KubernetesSourceType string `json:"kubernetes_source_type,omitempty"`
 }
 
 //+kubebuilder:object:root=true
