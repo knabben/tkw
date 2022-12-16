@@ -6,6 +6,15 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - secrets
+  - configmaps
+  verbs:
+  - list
+  - get
+  - watch
+- apiGroups:
   - imagebuilder.tanzu.opssec.in
   resources:
   - osimages

@@ -34,14 +34,39 @@ spec:
             type: object
           spec:
             description: OSImageSpec defines the desired state of OSImage
-            properties:
-              foo:
-                description: Foo is an example field of OSImage. Edit osimage_types.go
-                  to remove/update
-                type: string
             type: object
           status:
             description: OSImageStatus defines the observed state of OSImage
+            properties:
+              templates:
+                items:
+                  properties:
+                    build_date:
+                      type: string
+                    build_timestamp:
+                      type: string
+                    cni_version:
+                      type: string
+                    containerd_version:
+                      type: string
+                    distro_arch:
+                      type: string
+                    distro_name:
+                      type: string
+                    distro_version:
+                      type: string
+                    image_builder_version:
+                      type: string
+                    kubernetes_sem_ver:
+                      type: string
+                    kubernetes_source_type:
+                      type: string
+                    name:
+                      type: string
+                  type: object
+                type: array
+            required:
+            - templates
             type: object
         type: object
     served: true
