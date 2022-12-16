@@ -3,15 +3,15 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/knabben/tkw/pkg/config"
+	"github.com/knabben/tkw/pkg/docker"
+	"github.com/knabben/tkw/pkg/template"
+	"github.com/knabben/tkw/pkg/vsphere"
+	"github.com/knabben/tkw/pkg/windows"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/klog/v2"
 	"path/filepath"
-	"tkw/pkg/config"
-	"tkw/pkg/docker"
-	"tkw/pkg/template"
-	"tkw/pkg/vsphere"
-	"tkw/pkg/windows"
 )
 
 func init() {

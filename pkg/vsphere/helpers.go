@@ -3,44 +3,36 @@ package vsphere
 import (
 	"context"
 	"fmt"
+	"github.com/knabben/tkw/pkg/vsphere/models"
 	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25/types"
-	"k8s.io/klog/v2"
 	"net/url"
 	"strings"
-	"tkw/pkg/config"
-	"tkw/pkg/template"
-	"tkw/pkg/vsphere/models"
 )
 
-func ConnectAndFilterDC(ctx context.Context, mapper *config.Mapper) (Client, *models.VSphereDatacenter, error) {
-	var client Client
-
-	vsphereServer := mapper.Get(VsphereServer)
-	vsphereTlsThumbprint := mapper.Get(VsphereTlsThumbprint)
-	vsphereUsername := mapper.Get(VsphereUsername)
-	vspherePassword := mapper.Get(VspherePassword)
-
-	// Connecting vSphere server with configuration.
-	message := fmt.Sprintf("Connecting to the vSphere server... %s", vsphereServer)
-	tmpStyle := template.BaseStyle.Copy()
-	klog.Info(tmpStyle.Padding(3, 2, 3, 2).Render(message))
-
-	client, err := ConnectVCAndLogin(vsphereServer, vsphereTlsThumbprint, vsphereUsername, vspherePassword)
+// ConnectFilterDC connects on vSphere and login using credentials
+func ConnectFilterDC(ctx context.Context, vc, user, pass string) (Client, *models.VSphereDatacenter, error) {
+	var (
+		client Client
+		err    error
+	)
+	client, err = ConnectVCLogin(vc, user, pass)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// Search for existent Datacenter.
-	dc, err := FilterDatacenter(ctx, client, mapper.Get(VsphereDataCenter))
+	// Search for the existence of the datacenter.
+	var dc *models.VSphereDatacenter
+	dc, err = FilterDatacenter(ctx, client, "/dc0")
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return client, dc, nil
 }
 
-// ConnectVCAndLogin returns the logged client.
-func ConnectVCAndLogin(server, tlsThumbprint, username, password string) (Client, error) {
+// ConnectVCLogin returns the logged client.
+func ConnectVCLogin(server, username, password string) (Client, error) {
 	var ctx = context.Background()
 	if !strings.HasPrefix(server, "http") {
 		server = "https://" + server
@@ -51,7 +43,7 @@ func ConnectVCAndLogin(server, tlsThumbprint, username, password string) (Client
 		return nil, err
 	}
 	vc.Path = "/sdk"
-	vcClient, err := NewClient(vc, tlsThumbprint, false)
+	vcClient, err := NewClient(vc, "", true)
 	if err != nil {
 		return nil, err
 	}

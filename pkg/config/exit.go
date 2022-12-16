@@ -6,10 +6,10 @@ import (
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/knabben/tkw/pkg/template"
 	"k8s.io/klog/v2"
 	"os"
 	"time"
-	"tkw/pkg/template"
 )
 
 var timeout = time.Second * 5

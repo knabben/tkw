@@ -3,6 +3,7 @@ package vsphere
 import (
 	"context"
 	"fmt"
+	"github.com/knabben/tkw/pkg/vsphere/models"
 	"github.com/pkg/errors"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/object"
@@ -15,7 +16,6 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 	"net/url"
 	"strings"
-	"tkw/pkg/vsphere/models"
 )
 
 // VSphere resource tags for tkg resource

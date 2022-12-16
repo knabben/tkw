@@ -2,7 +2,7 @@ package vsphere
 
 import (
 	"context"
-	"tkw/pkg/vsphere/models"
+	"github.com/knabben/tkw/pkg/vsphere/models"
 )
 
 // FilterDatacenter find the datacenter object in the mapper and returns the DC model

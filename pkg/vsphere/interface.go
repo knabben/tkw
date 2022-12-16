@@ -2,9 +2,9 @@ package vsphere
 
 import (
 	"context"
+	"github.com/knabben/tkw/pkg/vsphere/models"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/mo"
-	"tkw/pkg/vsphere/models"
 )
 
 // vCenter Managed Object Type Names

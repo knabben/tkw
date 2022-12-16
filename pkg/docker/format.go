@@ -4,8 +4,8 @@ import (
 	"context"
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/knabben/tkw/pkg/config"
 	"time"
-	"tkw/pkg/config"
 )
 
 type model struct {

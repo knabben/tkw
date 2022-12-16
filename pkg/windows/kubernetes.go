@@ -3,6 +3,7 @@ package windows
 import (
 	"context"
 	"fmt"
+	"github.com/knabben/tkw/pkg/template"
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -10,7 +11,6 @@ import (
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog/v2"
-	"tkw/pkg/template"
 )
 
 const (

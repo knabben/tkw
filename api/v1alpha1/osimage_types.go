@@ -29,10 +29,11 @@ type OSImageSpec struct {
 
 // OSImageStatus defines the observed state of OSImage
 type OSImageStatus struct {
-	OSTemplates []OSImageTemplates
+	OSTemplates []OSImageTemplates `json:"templates"`
 }
 
 type OSImageTemplates struct {
+	Name                 string `json:"name,omitempty"`
 	BuildDate            string `json:"build_date,omitempty"`
 	BuildTimestamp       string `json:"build_timestamp,omitempty"`
 	CNIVersion           string `json:"cni_version,omitempty"`

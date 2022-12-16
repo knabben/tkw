@@ -3,12 +3,12 @@ package windows
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/knabben/tkw/pkg/config"
+	"github.com/knabben/tkw/pkg/vsphere"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
-	"tkw/pkg/config"
-	"tkw/pkg/vsphere"
 )
 
 type WindowsSettings struct {

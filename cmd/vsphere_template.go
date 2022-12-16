@@ -2,6 +2,9 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"k8s.io/client-go/util/homedir"
+	"path/filepath"
 )
 
 // templateCmd represents the vsphere command
@@ -13,5 +16,13 @@ be execute in the VSphere cluster.`,
 }
 
 func init() {
-	vsphereCmd.AddCommand(templateCmd)
+	kubeLocal := ""
+	if home := homedir.HomeDir(); home != "" {
+		kubeLocal = filepath.Join(home, ".kube", "config")
+	}
+
+	templateCmd.PersistentFlags().String("config", "c", "Path for the vSphere configuration file.")
+	templateCmd.PersistentFlags().StringP("kubeconfig", "k", kubeLocal, "Path Kubernetes configuration file.")
+	viper.BindPFlag("config", templateCmd.PersistentFlags().Lookup("config"))
+	viper.BindPFlag("kubeconfig", templateCmd.PersistentFlags().Lookup("kubeconfig"))
 }
