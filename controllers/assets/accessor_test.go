@@ -7,16 +7,12 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-
 var _ = Describe("Object decoding", func() {
 	Describe("Having a manifest", func() {
 		Context("Of type deployment", func() {
 			It("it should decode the object correctly", func() {
-				accessor := YAMLAccessor[*appsv1.Deployment]{
-					fileName: BUILDER_DEPLOYMENT,
-					schemaGV: appsv1.SchemeGroupVersion,
-				}
-				deployment, err := accessor.GetDecodedObject()
+				accessor := YAMLAccessor[*appsv1.Deployment]{}
+				deployment, err := accessor.GetDecodedObject(BUILDER_DEPLOYMENT, appsv1.SchemeGroupVersion)
 
 				Expect(err).To(BeNil())
 				Expect(deployment.Name).To(Equal("windows-resource-kit"))
@@ -26,11 +22,8 @@ var _ = Describe("Object decoding", func() {
 		})
 		Context("Of type service", func() {
 			It("it should decode the object correctly", func() {
-				accessor := YAMLAccessor[*v1.Service]{
-					fileName: BUILDER_SERVICE,
-					schemaGV: v1.SchemeGroupVersion,
-				}
-				service, err := accessor.GetDecodedObject()
+				accessor := YAMLAccessor[*v1.Service]{}
+				service, err := accessor.GetDecodedObject(BUILDER_SERVICE, v1.SchemeGroupVersion)
 
 				Expect(err).To(BeNil())
 				Expect(service.Name).To(Equal("windows-resource"))
@@ -40,11 +33,8 @@ var _ = Describe("Object decoding", func() {
 		})
 		Context("Of type namespace", func() {
 			It("it should decode the object correctly", func() {
-				accessor := YAMLAccessor[*v1.Namespace]{
-					fileName: BUILDER_NAMESPACE,
-					schemaGV: v1.SchemeGroupVersion,
-				}
-				namespace, err := accessor.GetDecodedObject()
+				accessor := YAMLAccessor[*v1.Namespace]{}
+				namespace, err := accessor.GetDecodedObject(BUILDER_NAMESPACE, v1.SchemeGroupVersion)
 
 				Expect(err).To(BeNil())
 				Expect(namespace.Name).To(Equal("windows"))

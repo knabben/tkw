@@ -59,5 +59,6 @@ func (y *YAMLAccessor[O]) GetDecodedObject(fileName string, sc schema.GroupVersi
 	if err != nil {
 		return nil, err
 	}
+
 	return obj.(O), nil
 }
