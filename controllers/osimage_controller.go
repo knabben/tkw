@@ -51,26 +51,31 @@ func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	var o imagebuilderv1alpha1.OSImage
 	if err := r.Get(ctx, req.NamespacedName, &o); err != nil {
-		logger.Error(err, "unable to get image object")
+		logger.Error(err, "unable to get OSImage object")
 		return ctrl.Result{}, err
 	}
 
-	if err := r.getConfigMapCredentials(ctx, cmap); err != nil {
+	if err := r.getCredentials(ctx, cmap); err != nil {
 		logger.Error(err, "unable to get configmap")
 		return ctrl.Result{}, err
 	}
-	if err := r.getSecretCredentials(ctx, cmap); err != nil {
-		logger.Error(err, "unable to get configmap")
+
+	if err := r.checkAssetsDeployment(); err != nil {
+		logger.Error(err, "unable to get object status")
 		return ctrl.Result{}, err
 	}
 
 	// reconcile the status with the machine find
 	if err := r.reconcileStatus(ctx, &o, cmap); err != nil {
-		logger.Error(err, "unable to get object status")
+		logger.Error(err, "unable to set OSImage object status")
 		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{Requeue: false}, nil
+}
+
+func (r *OSImageReconciler) checkAssetsDeployment() error {
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -81,8 +86,13 @@ func (r *OSImageReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// getConfigMapCredentials fetch the vsphere-cloud-config cm and extract data in the mapper
-func (r *OSImageReconciler) getConfigMapCredentials(ctx context.Context, cmap *config.Mapper) error {
+// getCredentials fetch the vsphere-cloud-config cm and extract data in the mapper
+func (r *OSImageReconciler) getCredentials(ctx context.Context, cmap *config.Mapper) error {
+	var (
+		vsphereSM  = &v1.Secret{}
+		namedspace = types.NamespacedName{Name: cmap.Get("secret-name"), Namespace: cmap.Get("secret-ns")}
+	)
+
 	vsphereCM, name := &v1.ConfigMap{}, "vsphere-cloud-config"
 	if err := r.Get(ctx, types.NamespacedName{Name: name, Namespace: TKGNamespace}, vsphereCM); err != nil {
 		return err
@@ -94,20 +104,9 @@ func (r *OSImageReconciler) getConfigMapCredentials(ctx context.Context, cmap *c
 	cmap.Set("secret-name", extractRValue(`secret-name = "(.*)"`, data))
 	cmap.Set("secret-ns", extractRValue(`secret-namespace = "(.*)"`, data))
 
-	return nil
-}
-
-// getSecretCredentials dump the secret user and pass in the mapper
-func (r *OSImageReconciler) getSecretCredentials(ctx context.Context, cmap *config.Mapper) error {
-	var (
-		vsphereSM  = &v1.Secret{}
-		namedspace = types.NamespacedName{Name: cmap.Get("secret-name"), Namespace: cmap.Get("secret-ns")}
-	)
-
 	if err := r.Get(ctx, namedspace, vsphereSM); err != nil {
 		return err
 	}
-
 	vcIP := cmap.Get("vc")
 	for _, s := range []string{"username", "password"} {
 		cmap.Set(s, string(vsphereSM.Data[fmt.Sprintf("%s.%s", vcIP, s)]))

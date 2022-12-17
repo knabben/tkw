@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: windows-resource-kit
+  namespace: windows
+spec:
+  selector:
+    matchLabels:
+      app: windows-resource-kit
+  template:
+    metadata:
+      labels:
+        app: image-builder-resource-kit
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+        - name: windows-imagebuilder-resourcekit
+          image: projects.registry.vmware.com/tkg/windows-resource-bundle:v1.23.8_vmware.2-tkg.1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
