@@ -38,14 +38,5 @@ var _ = Describe("Object decoding", func() {
 				Expect(len(service.Spec.Ports)).To(Equal(1))
 			})
 		})
-		Context("Of type namespace", func() {
-			It("it should decode the object correctly", func() {
-				accessor := assets.YAMLAccessor[*v1.Namespace]{}
-				namespace, err := accessor.GetDecodedObject(assets.BUILDER_NAMESPACE, v1.SchemeGroupVersion)
-
-				Expect(err).To(BeNil())
-				Expect(namespace.Name).To(Equal("windows"))
-			})
-		})
 	})
 })

@@ -79,6 +79,7 @@ func (r *OSImageReconciler) getOrCreateWindowsResourceBundle(ctx context.Context
 		return nil, err
 	}
 
+	// Set controller reference and create the object
 	for _, x := range []client.Object{deObject, svObject} {
 		if err := ctrl.SetControllerReference(imagebuilder, x, r.Scheme); err != nil {
 			return nil, err

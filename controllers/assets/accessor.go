@@ -20,7 +20,6 @@ var (
 const (
 	BUILDER_DEPLOYMENT = "manifests/builder-deployment.yaml"
 	BUILDER_SERVICE    = "manifests/builder-svc.yaml"
-	BUILDER_NAMESPACE  = "manifests/builder-ns.yaml"
 )
 
 func init() {
