@@ -1,24 +1,21 @@
 package controllers
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 	"github.com/knabben/tkw/controllers/assets"
+	"github.com/knabben/tkw/pkg/config"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	"github.com/knabben/tkw/pkg/config"
 	errors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"regexp"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // getCredentials fetch the vsphere-cloud-config cm and extract data in the mapper
 func (r *OSImageReconciler) getCredentials(ctx context.Context, cmap *config.Mapper) error {
-	var (
-		vsphereSM  = &v1.Secret{}
-		namedspace = types.NamespacedName{Name: cmap.Get("secret-name"), Namespace: cmap.Get("secret-ns")}
-	)
-
 	vsphereCM, name := &v1.ConfigMap{}, "vsphere-cloud-config"
 	if err := r.Get(ctx, types.NamespacedName{Name: name, Namespace: TKG_NAMESPACE}, vsphereCM); err != nil {
 		return err
@@ -30,7 +27,9 @@ func (r *OSImageReconciler) getCredentials(ctx context.Context, cmap *config.Map
 	cmap.Set("secret-name", extractRValue(`secret-name = "(.*)"`, data))
 	cmap.Set("secret-ns", extractRValue(`secret-namespace = "(.*)"`, data))
 
-	if err := r.Get(ctx, namedspace, vsphereSM); err != nil {
+	var vsphereSM = &v1.Secret{}
+	namespacedName := types.NamespacedName{Name: cmap.Get("secret-name"), Namespace: cmap.Get("secret-ns")}
+	if err := r.Get(ctx, namespacedName, vsphereSM); err != nil {
 		return err
 	}
 	vcIP := cmap.Get("vc")
@@ -41,26 +40,53 @@ func (r *OSImageReconciler) getCredentials(ctx context.Context, cmap *config.Map
 	return nil
 }
 
-func (r *OSImageReconciler) getOrCreateWindowsResourceBundle(ctx context.Context, name types.NamespacedName) error {
-	var (
-		deployment *appsv1.Deployment
-		err error
-	)
+func (r *OSImageReconciler) getOrCreate(ctx context.Context, object client.Object) (client.Object, error) {
+	logger := log.FromContext(ctx)
 
-	err = r.Get(ctx, name, deployment)
+	nsdName := types.NamespacedName{Namespace: object.GetNamespace(), Name: object.GetName()}
+	logger.Info("Fetching object.", "object", nsdName)
+
+	err := r.Get(ctx, nsdName, object)
 	if err != nil && errors.IsNotFound(err) {
-		deployment := assets.YAMLAccessor[*appsv1.Deployment]{
-			FileName: assets.BUILDER_DEPLOYMENT,
-			SchemaGV: appsv1.SchemeGroupVersion,
+		if err := r.Create(ctx, object); err != nil {
+			return object, err
 		}
-		var obj *appsv1.Deployment
-		if obj, err = deployment.GetDecodedObject(); err != nil {
+	} else if err != nil {
+		return nil, fmt.Errorf("Error trying to get object: %v", err)
+	}
+
+	return object, nil
+}
+
+func (r *OSImageReconciler) getOrCreateWindowsResourceBundle(ctx context.Context) error {
+	// Check for Windows resource bundle namespace and create
+	ns := assets.YAMLAccessor[*v1.Namespace]{}
+	if nsObject, err := ns.GetDecodedObject(assets.BUILDER_NAMESPACE, v1.SchemeGroupVersion); err != nil {
+		return err
+	} else {
+		if _, err := r.getOrCreate(ctx, nsObject); err != nil {
 			return err
 		}
-		fmt.Println("do not exist getting now")
-		fmt.Println(fmt.Sprintf("----- %v", obj))
-	} else if err != nil {
-		return fmt.Errorf("Error getting existing deployment.")
+	}
+
+	// Check for Windows resource bundle deployment and create
+	deploy := assets.YAMLAccessor[*appsv1.Deployment]{}
+	if deployObject, err := deploy.GetDecodedObject(assets.BUILDER_DEPLOYMENT, appsv1.SchemeGroupVersion); err != nil {
+		return err
+	} else {
+		if _, err := r.getOrCreate(ctx, deployObject); err != nil {
+			return err
+		}
+	}
+
+	// Check for the Windows resource bundle service and create
+	svc := assets.YAMLAccessor[*v1.Service]{}
+	if svcObject, err := svc.GetDecodedObject(assets.BUILDER_SERVICE, v1.SchemeGroupVersion); err != nil {
+		return err
+	} else {
+		if _, err := r.getOrCreate(ctx, svcObject); err != nil {
+			return err
+		}
 	}
 
 	return nil

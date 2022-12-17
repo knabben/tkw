@@ -10,7 +10,7 @@ spec:
   template:
     metadata:
       labels:
-        app: image-builder-resource-kit
+        app: windows-resource-kit
     spec:
       nodeSelector:
         kubernetes.io/os: linux

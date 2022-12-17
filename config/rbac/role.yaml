@@ -11,6 +11,8 @@ rules:
   - secrets
   - configmaps
   - deployments
+  - namespaces
+  - services
   verbs:
   - "*"
 - apiGroups:

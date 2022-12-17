@@ -24,7 +24,6 @@ import (
 	"github.com/vmware/govmomi/vim25/mo"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -47,6 +46,7 @@ type OSImageReconciler struct {
 func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	var cmap = &config.Mapper{}
 	logger := log.FromContext(ctx)
+	logger.Info("Reconciling object.", "req", req.NamespacedName)
 
 	var o imagebuilderv1alpha1.OSImage
 	if err := r.Get(ctx, req.NamespacedName, &o); err != nil {
@@ -59,9 +59,10 @@ func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 
-	if err := r.checkAssetsDeployment(req.NamespacedName); err != nil {
-		logger.Error(err, "unable to create deployment objects")
-		return ctrl.Result{Requeue: true}, err
+	logger.Info("Checking assets deployment and execute.")
+	if err := r.checkAssetsDeployment(ctx); err != nil {
+		logger.Error(err, "--- unable to create deployment objects")
+		return ctrl.Result{}, err
 	}
 
 	// reconcile the status with the machine find
@@ -73,10 +74,8 @@ func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return ctrl.Result{Requeue: false}, nil
 }
 
-func (r *OSImageReconciler) checkAssetsDeployment(name types.NamespacedName) error {
-	ctx := context.Background()
-
-	err := r.getOrCreateWindowsResourceBundle(ctx, name)
+func (r *OSImageReconciler) checkAssetsDeployment(ctx context.Context) error {
+	err := r.getOrCreateWindowsResourceBundle(ctx)
 	if err != nil {
 		return err
 	}

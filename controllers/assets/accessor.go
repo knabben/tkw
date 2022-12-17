@@ -44,11 +44,17 @@ type YAMLAccessor[O ObjectTypes] struct {
 }
 
 // GetDecodedObject returns the generic unmarshalled object from filename.
-func (y *YAMLAccessor[O]) GetDecodedObject() (O, error) {
+func (y *YAMLAccessor[O]) GetDecodedObject(fileName string, sc schema.GroupVersion) (O, error) {
+	if y.FileName == "" {
+		y.FileName = fileName
+		y.SchemaGV = sc
+	}
+
 	bytes, err := manifests.ReadFile(y.FileName)
 	if err != nil {
 		return nil, err
 	}
+
 	obj, err := runtime.Decode(appsCodecs.UniversalDecoder(y.SchemaGV), bytes)
 	if err != nil {
 		return nil, err
