@@ -22,8 +22,6 @@ import (
 	"github.com/knabben/tkw/pkg/config"
 	"github.com/knabben/tkw/pkg/vsphere"
 	"github.com/vmware/govmomi/vim25/mo"
-	appsv1 "k8s.io/api/apps/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -82,18 +80,10 @@ func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 }
 
 func (r *OSImageReconciler) checkAssetsDeployment(ctx context.Context, imagebuilder *imagebuilderv1alpha1.OSImage) error {
-	logger := log.FromContext(ctx)
-
-	wrb, err := r.getOrCreateWindowsResourceBundle(ctx)
+	_, err := r.getOrCreateWindowsResourceBundle(ctx, imagebuilder)
 	if err != nil {
 		return err
 	}
-
-	logger.Info("Setting controller reference for Windows resource bundle objects.")
-	for _, n := range []metav1.Object{wrb.Deployment, wrb.Namespace, wrb.Service} {
-		ctrl.SetControllerReference(imagebuilder, n, r.Scheme)
-	}
-
 	/*
 			// 3. Populate Windows configuration and save on a temporary file
 			klog.Info(template.Info("Generate windows.json file with parameters"))
@@ -131,7 +121,6 @@ func (r *OSImageReconciler) checkAssetsDeployment(ctx context.Context, imagebuil
 func (r *OSImageReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&imagebuilderv1alpha1.OSImage{}).
-		Owns(&appsv1.Deployment{}).
 		Complete(r)
 }
 
