@@ -1,4 +1,3 @@
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -7,13 +6,13 @@ metadata:
 rules:
 - apiGroups:
   - ""
+  - apps
   resources:
   - secrets
   - configmaps
+  - deployments
   verbs:
-  - list
-  - get
-  - watch
+  - "*"
 - apiGroups:
   - imagebuilder.tanzu.opssec.in
   resources:

@@ -18,22 +18,21 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	imagebuilderv1alpha1 "github.com/knabben/tkw/api/v1alpha1"
 	"github.com/knabben/tkw/pkg/config"
 	"github.com/knabben/tkw/pkg/vsphere"
 	"github.com/vmware/govmomi/vim25/mo"
-	v1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"regexp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-const TKGNamespace = "kube-system"
-
+const (
+	TKG_NAMESPACE = "kube-system"
+)
 // OSImageReconciler reconciles a OSImage object
 type OSImageReconciler struct {
 	client.Client
@@ -60,9 +59,9 @@ func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 
-	if err := r.checkAssetsDeployment(); err != nil {
-		logger.Error(err, "unable to get object status")
-		return ctrl.Result{}, err
+	if err := r.checkAssetsDeployment(req.NamespacedName); err != nil {
+		logger.Error(err, "unable to create deployment objects")
+		return ctrl.Result{Requeue: true}, err
 	}
 
 	// reconcile the status with the machine find
@@ -74,7 +73,62 @@ func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return ctrl.Result{Requeue: false}, nil
 }
 
-func (r *OSImageReconciler) checkAssetsDeployment() error {
+func (r *OSImageReconciler) checkAssetsDeployment(name types.NamespacedName) error {
+	ctx := context.Background()
+
+	err := r.getOrCreateWindowsResourceBundle(ctx, name)
+	if err != nil {
+		return err
+	}
+	/*
+		var (
+			nodeIP     string
+			ctx        = context.Background()
+			kubeconfig = viper.GetString("kubeconfig")
+		)
+
+		// 2. Create the windows-resource-bundle in the cluster. extract the Node IP
+		client, err := windows.NewKubernetesClient(kubeconfig)
+		config.ExplodeGraceful(err)
+
+		msg = fmt.Sprintf("Creating Windows Image-Builder resources on %s default context", kubeconfig)
+		klog.Info(template.Info(msg))
+		err = client.CreateWindowsResources(ctx)
+		config.ExplodeGraceful(err)
+		if nodeIP, err = client.GetFirstNodeIP(ctx); err != nil {
+			config.ExplodeGraceful(err)
+		}
+	*/
+	/*
+			// 3. Populate Windows configuration and save on a temporary file
+			klog.Info(template.Info("Generate windows.json file with parameters"))
+			winSettings := windows.NewWindowsSettings(
+				viper.GetString("isopath"),
+				viper.GetString("vmtoolspath"),
+				nodeIP,
+			)
+
+			// Manage the configuration based on mgmt parameters
+			data, err := winSettings.GenerateJSONConfig(mapper)
+			config.ExplodeGraceful(err)
+			windowsFile, err := winSettings.SaveTempJSON(data)
+			config.ExplodeGraceful(err)
+
+			// 4. Image builder running on a docker
+			klog.Info(template.Info("Running Docker container with Image builder, be ready!"))
+			cli, err := docker.NewDockerClient(windowsFile)
+			config.ExplodeGraceful(err)
+
+			// Run the image-builder container.
+			var containerID string
+			containerID, err = cli.Run(ctx)
+			config.ExplodeGraceful(err)
+
+			// Iterate on logs and print output, monitor for errors.
+			err = monitorOutput(cli, containerID)
+			config.ExplodeGraceful(err)
+		},
+	*/
 	return nil
 }
 
@@ -82,37 +136,8 @@ func (r *OSImageReconciler) checkAssetsDeployment() error {
 func (r *OSImageReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&imagebuilderv1alpha1.OSImage{}).
-		//Owns(&v1.Job{}).
+		Owns(&appsv1.Deployment{}).
 		Complete(r)
-}
-
-// getCredentials fetch the vsphere-cloud-config cm and extract data in the mapper
-func (r *OSImageReconciler) getCredentials(ctx context.Context, cmap *config.Mapper) error {
-	var (
-		vsphereSM  = &v1.Secret{}
-		namedspace = types.NamespacedName{Name: cmap.Get("secret-name"), Namespace: cmap.Get("secret-ns")}
-	)
-
-	vsphereCM, name := &v1.ConfigMap{}, "vsphere-cloud-config"
-	if err := r.Get(ctx, types.NamespacedName{Name: name, Namespace: TKGNamespace}, vsphereCM); err != nil {
-		return err
-	}
-
-	// Fetch vsphere-cloud-config and extract data
-	data := vsphereCM.Data["vsphere.conf"]
-	cmap.Set("vc", extractRValue(`\[VirtualCenter "(.*)"\]`, data))
-	cmap.Set("secret-name", extractRValue(`secret-name = "(.*)"`, data))
-	cmap.Set("secret-ns", extractRValue(`secret-namespace = "(.*)"`, data))
-
-	if err := r.Get(ctx, namedspace, vsphereSM); err != nil {
-		return err
-	}
-	vcIP := cmap.Get("vc")
-	for _, s := range []string{"username", "password"} {
-		cmap.Set(s, string(vsphereSM.Data[fmt.Sprintf("%s.%s", vcIP, s)]))
-	}
-
-	return nil
 }
 
 func (r *OSImageReconciler) reconcileStatus(ctx context.Context, o *imagebuilderv1alpha1.OSImage, cmap *config.Mapper) error {
@@ -153,19 +178,4 @@ func (r *OSImageReconciler) reconcileStatus(ctx context.Context, o *imagebuilder
 		return err
 	}
 	return nil
-}
-
-func extractRValue(v, d string) string {
-	var (
-		re  *regexp.Regexp
-		err error
-	)
-	if re, err = regexp.Compile(v); err != nil {
-		return ""
-	}
-	submatch := re.FindStringSubmatch(d)
-	if len(submatch) < 1 {
-		return ""
-	}
-	return submatch[1]
 }

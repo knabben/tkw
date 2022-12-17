@@ -1,9 +1,8 @@
 module github.com/knabben/tkw
 
-go 1.17
+go 1.19
 
 require (
-	github.com/BurntSushi/toml v0.3.1
 	github.com/charmbracelet/bubbles v0.14.0
 	github.com/charmbracelet/bubbletea v0.23.1
 	github.com/charmbracelet/lipgloss v0.6.0
