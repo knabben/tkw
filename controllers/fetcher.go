@@ -43,11 +43,10 @@ func (r *OSImageReconciler) getCredentials(ctx context.Context, cmap *config.Map
 func (r *OSImageReconciler) getOrCreate(ctx context.Context, object client.Object) (client.Object, error) {
 	logger := log.FromContext(ctx)
 
-	nsdName := types.NamespacedName{Namespace: object.GetNamespace(), Name: object.GetName()}
-	logger.Info("Fetching object.", "object", nsdName)
+	named := types.NamespacedName{Namespace: object.GetNamespace(), Name: object.GetName()}
+	logger.Info("Fetching object.", "object", named)
 
-	err := r.Get(ctx, nsdName, object)
-	if err != nil && errors.IsNotFound(err) {
+	if err := r.Get(ctx, named, object); err != nil && errors.IsNotFound(err) {
 		if err := r.Create(ctx, object); err != nil {
 			return object, err
 		}
@@ -58,38 +57,49 @@ func (r *OSImageReconciler) getOrCreate(ctx context.Context, object client.Objec
 	return object, nil
 }
 
-func (r *OSImageReconciler) getOrCreateWindowsResourceBundle(ctx context.Context) error {
+type WindowsResourceBundle struct {
+	Deployment *appsv1.Deployment
+	Namespace  *v1.Namespace
+	Service    *v1.Service
+}
+
+func (r *OSImageReconciler) getOrCreateWindowsResourceBundle(ctx context.Context) (*WindowsResourceBundle, error) {
+	wrb := &WindowsResourceBundle{}
+
 	// Check for Windows resource bundle namespace and create
 	ns := assets.YAMLAccessor[*v1.Namespace]{}
 	if nsObject, err := ns.GetDecodedObject(assets.BUILDER_NAMESPACE, v1.SchemeGroupVersion); err != nil {
-		return err
+		return nil, err
 	} else {
 		if _, err := r.getOrCreate(ctx, nsObject); err != nil {
-			return err
+			return nil, err
 		}
+		wrb.Namespace = nsObject
 	}
 
 	// Check for Windows resource bundle deployment and create
 	deploy := assets.YAMLAccessor[*appsv1.Deployment]{}
 	if deployObject, err := deploy.GetDecodedObject(assets.BUILDER_DEPLOYMENT, appsv1.SchemeGroupVersion); err != nil {
-		return err
+		return nil, err
 	} else {
 		if _, err := r.getOrCreate(ctx, deployObject); err != nil {
-			return err
+			return nil, err
 		}
+		wrb.Deployment = deployObject
 	}
 
 	// Check for the Windows resource bundle service and create
 	svc := assets.YAMLAccessor[*v1.Service]{}
 	if svcObject, err := svc.GetDecodedObject(assets.BUILDER_SERVICE, v1.SchemeGroupVersion); err != nil {
-		return err
+		return nil, err
 	} else {
 		if _, err := r.getOrCreate(ctx, svcObject); err != nil {
-			return err
+			return nil, err
 		}
+		wrb.Service = svcObject
 	}
 
-	return nil
+	return wrb, nil
 }
 
 func extractRValue(v, d string) string {

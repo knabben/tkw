@@ -23,6 +23,7 @@ import (
 	"github.com/knabben/tkw/pkg/vsphere"
 	"github.com/vmware/govmomi/vim25/mo"
 	appsv1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -32,6 +33,7 @@ import (
 const (
 	TKG_NAMESPACE = "kube-system"
 )
+
 // OSImageReconciler reconciles a OSImage object
 type OSImageReconciler struct {
 	client.Client
@@ -42,6 +44,11 @@ type OSImageReconciler struct {
 //+kubebuilder:rbac:groups=imagebuilder.tanzu.opssec.in,resources=osimages,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=imagebuilder.tanzu.opssec.in,resources=osimages/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=imagebuilder.tanzu.opssec.in,resources=osimages/finalizers,verbs=update
+//+kubebuilder:rbac:groups="",resources=namespaces,verbs=create;get;list
+//+kubebuilder:rbac:groups="",namespace="kube-system",resources=secrets,verbs=get;list;watch
+//+kubebuilder:rbac:groups="",namespace="kube-system",resources=configmaps,verbs=get;list;watch
+//+kubebuilder:rbac:groups="",resources=service,namespace=windows,verbs="*"
+//+kubebuilder:rbac:groups="",resources=deployments,namespace=windows,verbs="*"
 
 func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	var cmap = &config.Mapper{}
@@ -60,7 +67,7 @@ func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	logger.Info("Checking assets deployment and execute.")
-	if err := r.checkAssetsDeployment(ctx); err != nil {
+	if err := r.checkAssetsDeployment(ctx, &o); err != nil {
 		logger.Error(err, "--- unable to create deployment objects")
 		return ctrl.Result{}, err
 	}
@@ -74,30 +81,19 @@ func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return ctrl.Result{Requeue: false}, nil
 }
 
-func (r *OSImageReconciler) checkAssetsDeployment(ctx context.Context) error {
-	err := r.getOrCreateWindowsResourceBundle(ctx)
+func (r *OSImageReconciler) checkAssetsDeployment(ctx context.Context, imagebuilder *imagebuilderv1alpha1.OSImage) error {
+	logger := log.FromContext(ctx)
+
+	wrb, err := r.getOrCreateWindowsResourceBundle(ctx)
 	if err != nil {
 		return err
 	}
-	/*
-		var (
-			nodeIP     string
-			ctx        = context.Background()
-			kubeconfig = viper.GetString("kubeconfig")
-		)
 
-		// 2. Create the windows-resource-bundle in the cluster. extract the Node IP
-		client, err := windows.NewKubernetesClient(kubeconfig)
-		config.ExplodeGraceful(err)
+	logger.Info("Setting controller reference for Windows resource bundle objects.")
+	for _, n := range []metav1.Object{wrb.Deployment, wrb.Namespace, wrb.Service} {
+		ctrl.SetControllerReference(imagebuilder, n, r.Scheme)
+	}
 
-		msg = fmt.Sprintf("Creating Windows Image-Builder resources on %s default context", kubeconfig)
-		klog.Info(template.Info(msg))
-		err = client.CreateWindowsResources(ctx)
-		config.ExplodeGraceful(err)
-		if nodeIP, err = client.GetFirstNodeIP(ctx); err != nil {
-			config.ExplodeGraceful(err)
-		}
-	*/
 	/*
 			// 3. Populate Windows configuration and save on a temporary file
 			klog.Info(template.Info("Generate windows.json file with parameters"))

@@ -25,25 +25,45 @@ import (
 
 // OSImageSpec defines the desired state of OSImage
 type OSImageSpec struct {
+	WindowsISOPath      string `json:"windowsISOPath"`
+	VMToolsPath         string `json:"vmtoolsPath"`
+	VSphereFolder       string `json:"vsphereFolder"`
+	VSphereDataStore    string `json:"vsphereDatastore"`
+	VSphereNetwork      string `json:"vsphereNetwork"`
+	VSphereResourcePool string `json:"vsphereResourcePool"`
+	VSphereCluster      string `json:"vsphereCluster"`
 }
 
 // OSImageStatus defines the observed state of OSImage
 type OSImageStatus struct {
-	OSTemplates []OSImageTemplates `json:"templates"`
+	WindowsBundle WindowsBundle      `json:"windowsBundle"`
+	OSTemplates   []OSImageTemplates `json:"templates"`
+}
+
+// WindowsBundle represents the status of the Windows resource bundle
+type WindowsBundle struct {
+	// ReadyReplicas is the amount of ready pod replicas in the deployment
+	ReadyReplicas string `json:"readyReplicas"`
+
+	// ServiceName holds the name of the service used in the resource bundle
+	ServiceName string `json:"serviceName"`
+
+	// ServicePort holds the port of the service used in the resource bundle
+	ServicePort int32 `json:"servicePort"`
 }
 
 type OSImageTemplates struct {
 	Name                 string `json:"name,omitempty"`
-	BuildDate            string `json:"build_date,omitempty"`
-	BuildTimestamp       string `json:"build_timestamp,omitempty"`
-	CNIVersion           string `json:"cni_version,omitempty"`
-	ContainerDVersion    string `json:"containerd_version,omitempty"`
-	DistroArch           string `json:"distro_arch,omitempty"`
-	DistroName           string `json:"distro_name,omitempty"`
-	DistroVersion        string `json:"distro_version,omitempty"`
-	ImageBuilderVersion  string `json:"image_builder_version,omitempty"`
-	KubernetesSemVer     string `json:"kubernetes_sem_ver,omitempty"`
-	KubernetesSourceType string `json:"kubernetes_source_type,omitempty"`
+	BuildDate            string `json:"buildDate,omitempty"`
+	BuildTimestamp       string `json:"buildTimestamp,omitempty"`
+	CNIVersion           string `json:"cniVersion,omitempty"`
+	ContainerDVersion    string `json:"containerdVersion,omitempty"`
+	DistroArch           string `json:"distroArch,omitempty"`
+	DistroName           string `json:"distroName,omitempty"`
+	DistroVersion        string `json:"distroVersion,omitempty"`
+	ImageBuilderVersion  string `json:"imageBuilder,omitempty"`
+	KubernetesSemVer     string `json:"kubernetesSemver,omitempty"`
+	KubernetesSourceType string `json:"kubernetesSource,omitempty"`
 }
 
 //+kubebuilder:object:root=true
