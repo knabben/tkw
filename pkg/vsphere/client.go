@@ -23,9 +23,6 @@ const (
 	VMGuestInfoUserDataKey = "guestinfo.userdata"
 )
 
-// Constant representing the number of version types tracked in a semver
-const numOfSemverVersionNumbers = 3
-
 // DefaultClient dafaults vc client
 type DefaultClient struct {
 	vmomiClient *govmomi.Client
@@ -278,11 +275,6 @@ func (c *DefaultClient) unsetDefaultFolder(objects []*models.VSphereManagementOb
 		}
 	}
 	return objects
-}
-
-func isDuplicate(names map[string]bool, name string) bool {
-	_, exists := names[name]
-	return exists
 }
 
 // getVirtualMachines returns list of virtual machines in the given datacenter
