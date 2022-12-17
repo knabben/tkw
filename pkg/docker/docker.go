@@ -1,13 +1,11 @@
 package docker
 
 import (
-	"bytes"
 	"context"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
-	"github.com/docker/docker/pkg/stdcopy"
 )
 
 type Docker struct {
@@ -16,18 +14,6 @@ type Docker struct {
 }
 
 const IMAGE_BUILDER = "projects.registry.vmware.com/tkg/image-builder:v0.1.12_vmware.2"
-
-func NewDockerClient(windows string) (*Docker, error) {
-	return connectDocker(windows)
-}
-
-func connectDocker(windows string) (*Docker, error) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		return nil, err
-	}
-	return &Docker{Client: cli, WindowsFile: windows}, nil
-}
 
 func (d *Docker) Run(ctx context.Context) (string, error) {
 	// Configuration with image-builder command and debugging flags.
@@ -64,19 +50,4 @@ func (d *Docker) Run(ctx context.Context) (string, error) {
 	}
 
 	return containerID, nil
-}
-
-// GetLogs extract the logs
-func (d *Docker) GetLogs(ctx context.Context, containerID string) (string, error) {
-	opts := types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true}
-	src, err := d.Client.ContainerLogs(ctx, containerID, opts)
-	if err != nil {
-		return "", err
-	}
-	if src != nil {
-		dst := &bytes.Buffer{}
-		stdcopy.StdCopy(dst, dst, src)
-		return dst.String(), nil
-	}
-	return "", nil
 }
