@@ -1,6 +1,7 @@
 apiVersion: imagebuilder.tanzu.opssec.in/v1alpha1
 kind: OSImage
 metadata:
-  name: osimage-sample
+  name: windows-image
+  namespace: tkw-system
 spec:
   # TODO(user): Add fields here

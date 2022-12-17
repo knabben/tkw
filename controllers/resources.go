@@ -11,6 +11,7 @@ import (
 	errors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"regexp"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -64,13 +65,6 @@ type WindowsResourceBundle struct {
 }
 
 func (r *OSImageReconciler) getOrCreateWindowsResourceBundle(ctx context.Context, imagebuilder *v1alpha1.OSImage) (*WindowsResourceBundle, error) {
-	// Check for Windows resource bundle namespace and create
-	ns := assets.YAMLAccessor[*v1.Namespace]{}
-	nsObject, err := ns.GetDecodedObject(assets.BUILDER_NAMESPACE, v1.SchemeGroupVersion)
-	if err != nil {
-		return nil, err
-	}
-
 	// Check for Windows resource bundle deployment and create
 	deploy := assets.YAMLAccessor[*appsv1.Deployment]{}
 	deObject, err := deploy.GetDecodedObject(assets.BUILDER_DEPLOYMENT, appsv1.SchemeGroupVersion)
@@ -85,7 +79,10 @@ func (r *OSImageReconciler) getOrCreateWindowsResourceBundle(ctx context.Context
 		return nil, err
 	}
 
-	for _, x := range []client.Object{nsObject, deObject, svObject} {
+	for _, x := range []client.Object{deObject, svObject} {
+		if err := ctrl.SetControllerReference(imagebuilder, x, r.Scheme); err != nil {
+			return nil, err
+		}
 		if _, err := r.getOrCreate(ctx, x); err != nil {
 			return nil, err
 		}
@@ -93,7 +90,6 @@ func (r *OSImageReconciler) getOrCreateWindowsResourceBundle(ctx context.Context
 
 	return &WindowsResourceBundle{
 		Deployment: deObject,
-		Namespace:  nsObject,
 		Service:    svObject,
 	}, nil
 }
