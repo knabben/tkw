@@ -5,7 +5,7 @@ metadata:
   namespace: windows
 spec:
   selector:
-    app: image-builder-resource-kit
+    app: windows-resource-kit
   type: NodePort
   ports:
     - port: 3000
