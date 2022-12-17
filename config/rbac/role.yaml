@@ -1,3 +1,4 @@
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -6,15 +7,12 @@ metadata:
 rules:
 - apiGroups:
   - ""
-  - apps
   resources:
-  - secrets
-  - configmaps
-  - deployments
   - namespaces
-  - services
   verbs:
-  - "*"
+  - create
+  - get
+  - list
 - apiGroups:
   - imagebuilder.tanzu.opssec.in
   resources:
@@ -41,3 +39,47 @@ rules:
   - get
   - patch
   - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  name: manager-role
+  namespace: kube-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  name: manager-role
+  namespace: windows
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - deployments
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - service
+  verbs:
+  - '*'
