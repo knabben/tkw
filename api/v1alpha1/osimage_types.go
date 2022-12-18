@@ -36,20 +36,11 @@ type OSImageSpec struct {
 
 // OSImageStatus defines the observed state of OSImage
 type OSImageStatus struct {
-	WindowsBundle WindowsBundle      `json:"windowsBundle"`
+	// OSTemplates are the OVA templates in the vSphere
 	OSTemplates   []OSImageTemplates `json:"templates"`
-}
 
-// WindowsBundle represents the status of the Windows resource bundle
-type WindowsBundle struct {
-	// ReadyReplicas is the amount of ready pod replicas in the deployment
-	ReadyReplicas string `json:"readyReplicas"`
-
-	// ServiceName holds the name of the service used in the resource bundle
-	ServiceName string `json:"serviceName"`
-
-	// ServicePort holds the port of the service used in the resource bundle
-	ServicePort int32 `json:"servicePort"`
+	// Conditions holds a list of internal conditions of the operator
+	Conditions []metav1.Condition `json:"conditions"`
 }
 
 type OSImageTemplates struct {

@@ -22,6 +22,7 @@ import (
 	"github.com/knabben/tkw/pkg/config"
 	"github.com/knabben/tkw/pkg/vsphere"
 	"github.com/vmware/govmomi/vim25/mo"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -43,10 +44,10 @@ type OSImageReconciler struct {
 //+kubebuilder:rbac:groups=imagebuilder.tanzu.opssec.in,resources=osimages/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=imagebuilder.tanzu.opssec.in,resources=osimages/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources=namespaces,verbs=create;get;list
-//+kubebuilder:rbac:groups="",namespace="kube-system",resources=secrets,verbs=get;list;watch
-//+kubebuilder:rbac:groups="",namespace="kube-system",resources=configmaps,verbs=get;list;watch
-//+kubebuilder:rbac:groups="",resources=service,namespace=windows,verbs="*"
-//+kubebuilder:rbac:groups="",resources=deployments,namespace=windows,verbs="*"
+//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;read;list;watch
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=get;read;list;watch
+//+kubebuilder:rbac:groups="",resources=services,verbs="*"
+//+kubebuilder:rbac:groups="apps",resources=deployments,verbs="*"
 
 func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	var cmap = &config.Mapper{}
@@ -60,14 +61,13 @@ func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	if err := r.getCredentials(ctx, cmap); err != nil {
-		logger.Error(err, "unable to get configmap")
-		return ctrl.Result{}, err
+		logger.Error(err, "unable to get configmap, create the required objects.")
+		return ctrl.Result{}, nil
 	}
 
 	logger.Info("Checking assets deployment and execute.")
 	if err := r.checkAssetsDeployment(ctx, &o); err != nil {
-		logger.Error(err, "--- unable to create deployment objects")
-		return ctrl.Result{}, err
+		return ctrl.Result{}, nil
 	}
 
 	// reconcile the status with the machine find
@@ -121,6 +121,7 @@ func (r *OSImageReconciler) checkAssetsDeployment(ctx context.Context, imagebuil
 func (r *OSImageReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&imagebuilderv1alpha1.OSImage{}).
+		Owns(&appsv1.Deployment{}).
 		Complete(r)
 }
 
