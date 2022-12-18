@@ -131,24 +131,9 @@ func (r *OSImageReconciler) checkAssetsDeployment(ctx context.Context, cmap *con
 	)
 
 	// Manage the configuration based on mgmt parameters
-	data, err := settings.GenerateJSONConfig(cmap)
+	data, _ := settings.GenerateJSONConfig(cmap)
 	fmt.Println(string(data))
 
-	/*
-		// 4. Image builder running on a docker
-		klog.Info(template.Info("Running Docker container with Image builder, be ready!"))
-		cli, err := docker.NewDockerClient(windowsFile)
-		config.ExplodeGraceful(err)
-
-		// Run the image-builder container.
-		var containerID stri ng
-		containerID, err = cli.Run(ctx)
-		config.ExplodeGraceful(err)
-
-		// Iterate on logs and print output, monitor for errors.
-		err = monitorOutput(cli, containerID)
-		config.ExplodeGraceful(err)
-	*/
 	return nil
 }
 

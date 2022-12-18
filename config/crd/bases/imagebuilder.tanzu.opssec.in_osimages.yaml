@@ -38,20 +38,29 @@ spec:
               vmtoolsPath:
                 type: string
               vsphereCluster:
+                default: cluster0
+                type: string
+              vsphereDatacenter:
+                default: dc0
                 type: string
               vsphereDatastore:
+                default: sharedVmfs-0
                 type: string
               vsphereFolder:
+                default: folder0
                 type: string
               vsphereNetwork:
+                default: VM Network
                 type: string
               vsphereResourcePool:
+                default: rp0
                 type: string
               windowsISOPath:
                 type: string
             required:
             - vmtoolsPath
             - vsphereCluster
+            - vsphereDatacenter
             - vsphereDatastore
             - vsphereFolder
             - vsphereNetwork

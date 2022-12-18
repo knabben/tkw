@@ -6,8 +6,6 @@ import (
 	"github.com/knabben/tkw/api/v1alpha1"
 	"github.com/knabben/tkw/pkg/config"
 	"github.com/knabben/tkw/pkg/vsphere"
-	"log"
-	"os"
 	"path/filepath"
 	"strings"
 )
@@ -16,17 +14,17 @@ type WindowsSettings struct {
 	OSImagePath          string
 	VMToolsPath          string
 	ServiceName          string
-	ServiceNamespace string
+	ServiceNamespace     string
 	ServicePort          int32
 	WindowsConfiguration *WindowsConfiguration
 }
 
 func NewWindowsSettings(osp, vmp, svcName, svcNS string, svcPort int32, img *v1alpha1.OSImage) *WindowsSettings {
 	return &WindowsSettings{
-		OSImagePath: osp,
-		VMToolsPath: vmp,
-		ServiceName: svcName,
-		ServicePort: svcPort,
+		OSImagePath:      osp,
+		VMToolsPath:      vmp,
+		ServiceName:      svcName,
+		ServicePort:      svcPort,
 		ServiceNamespace: svcNS,
 		WindowsConfiguration: &WindowsConfiguration{
 			Folder:       img.Spec.VSphereFolder,
@@ -36,25 +34,6 @@ func NewWindowsSettings(osp, vmp, svcName, svcNS string, svcPort int32, img *v1a
 			Cluster:      img.Spec.VSphereCluster,
 		},
 	}
-}
-
-// SaveTempJSON dumps the marshal JSON on a temp file and returns the path
-func (w *WindowsSettings) SaveTempJSON(content []byte) (string, error) {
-	pwd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	// create and open a temporary file
-	f, err := os.CreateTemp(pwd, ".tmpfile-") // in Go version older than 1.17 you can use ioutil.TempFile
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
-
-	if _, err := f.Write(content); err != nil {
-		log.Fatal(err)
-	}
-	return f.Name(), nil
 }
 
 // GenerateJSONConfig renders the full Window.WindowsConfiguration. settings in JSON
@@ -73,9 +52,9 @@ func (w *WindowsSettings) GenerateJSONConfig(mapper *config.Mapper) ([]byte, err
 	w.WindowsConfiguration.ConvertToTemplate = "true"
 
 	// todo(knabben): pass it to paremeters
-	kubernetesVersion := "v1.23.8" // todo(knabben) - fix this
+	kubernetesVersion := "v1.23.8"
 	w.WindowsConfiguration.WindowsUpdatesCategories = "CriticalUpdates SecurityUpdates UpdateRollups"
-	w.WindowsConfiguration.UnattendTimezone = "GMT Standard Time" // todo(knabben) pass to parameter
+	w.WindowsConfiguration.UnattendTimezone = "GMT Standard Time"
 	w.WindowsConfiguration.KubernetesSemver = kubernetesVersion
 
 	const (
@@ -104,14 +83,14 @@ func (w *WindowsSettings) GenerateJSONConfig(mapper *config.Mapper) ([]byte, err
 	return json.Marshal(w.WindowsConfiguration)
 }
 
+// BaseBurritoURL returns the service endpoint for assets download
+func (w *WindowsSettings) BaseBurritoURL() string {
+	return fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", w.ServiceName, w.ServiceNamespace, w.ServicePort)
+}
+
 // generateISOPath returns the full path for file access
 // ie [datastore1] iso/VMw.WindowsConfiguration.re-tools-windows-11.3.5-18557794.iso)
 func generateIsoPath(datastore, path string) string {
 	ds := strings.Split(datastore, "/")
 	return fmt.Sprintf("[%s] ./%s", ds[len(ds)-1], path)
-}
-
-// BaseBurritoURL returns the service endpoint for assets download
-func (w *WindowsSettings) BaseBurritoURL() string {
-	return fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", w.ServiceName, w.ServiceNamespace, w.ServicePort)
 }
