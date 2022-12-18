@@ -23,7 +23,7 @@ var _ = Describe("Object decoding", func() {
 
 				Expect(err).To(BeNil())
 				Expect(deployment.Name).To(Equal("windows-resource-kit"))
-				Expect(deployment.Namespace).To(Equal("windows"))
+				Expect(deployment.Namespace).To(Equal("tkw-system"))
 				Expect(len(deployment.Spec.Template.Spec.Containers)).To(Equal(1))
 			})
 		})
@@ -34,17 +34,8 @@ var _ = Describe("Object decoding", func() {
 
 				Expect(err).To(BeNil())
 				Expect(service.Name).To(Equal("windows-resource"))
-				Expect(service.Namespace).To(Equal("windows"))
+				Expect(service.Namespace).To(Equal("tkw-system"))
 				Expect(len(service.Spec.Ports)).To(Equal(1))
-			})
-		})
-		Context("Of type namespace", func() {
-			It("it should decode the object correctly", func() {
-				accessor := assets.YAMLAccessor[*v1.Namespace]{}
-				namespace, err := accessor.GetDecodedObject(assets.BUILDER_NAMESPACE, v1.SchemeGroupVersion)
-
-				Expect(err).To(BeNil())
-				Expect(namespace.Name).To(Equal("windows"))
 			})
 		})
 	})
