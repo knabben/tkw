@@ -3,6 +3,7 @@ package windows
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/knabben/tkw/api/v1alpha1"
 	"github.com/knabben/tkw/pkg/config"
 	"github.com/knabben/tkw/pkg/vsphere"
 	"log"
@@ -12,19 +13,28 @@ import (
 )
 
 type WindowsSettings struct {
-	OSImagePath string
-	VMToolsPath string
-	NodeIP      string
-
+	OSImagePath          string
+	VMToolsPath          string
+	ServiceName          string
+	ServiceNamespace string
+	ServicePort          int32
 	WindowsConfiguration *WindowsConfiguration
 }
 
-func NewWindowsSettings(osp, vmp, nodeip string) *WindowsSettings {
+func NewWindowsSettings(osp, vmp, svcName, svcNS string, svcPort int32, img *v1alpha1.OSImage) *WindowsSettings {
 	return &WindowsSettings{
-		OSImagePath:          osp,
-		VMToolsPath:          vmp,
-		NodeIP:               nodeip,
-		WindowsConfiguration: &WindowsConfiguration{},
+		OSImagePath: osp,
+		VMToolsPath: vmp,
+		ServiceName: svcName,
+		ServicePort: svcPort,
+		ServiceNamespace: svcNS,
+		WindowsConfiguration: &WindowsConfiguration{
+			Folder:       img.Spec.VSphereFolder,
+			Datastore:    img.Spec.VSphereDataStore,
+			Network:      img.Spec.VSphereNetwork,
+			ResourcePool: img.Spec.VSphereResourcePool,
+			Cluster:      img.Spec.VSphereCluster,
+		},
 	}
 }
 
@@ -50,25 +60,33 @@ func (w *WindowsSettings) SaveTempJSON(content []byte) (string, error) {
 // GenerateJSONConfig renders the full Window.WindowsConfiguration. settings in JSON
 func (w *WindowsSettings) GenerateJSONConfig(mapper *config.Mapper) ([]byte, error) {
 	baseUrl := w.BaseBurritoURL()
-	kubernetesVersion := "v1.23.8" // todo(knabben) - fix this
-	datastore := mapper.Get(vsphere.VsphereDataStore)
 
-	w.WindowsConfiguration.Cluster = "cluster0"                   // todo(knabben) - detect this info
-	w.WindowsConfiguration.UnattendTimezone = "GMT Standard Time" // todo(knabben - allow user change
-	w.WindowsConfiguration.WindowsUpdatesCategories = "CriticalUpdates SecurityUpdates UpdateRollups"
-	w.WindowsConfiguration.KubernetesSemver = kubernetesVersion
-	w.WindowsConfiguration.Runtime = "containerd"
-	w.WindowsConfiguration.ConvertToTemplate = "true"
-	w.WindowsConfiguration.Folder = mapper.Get(vsphere.VsphereFolder)
+	w.WindowsConfiguration.OsIsoPath = generateIsoPath(w.WindowsConfiguration.Datastore, filepath.Base(w.OSImagePath))
+	w.WindowsConfiguration.VmtoolsIsoPath = generateIsoPath(w.WindowsConfiguration.Datastore, filepath.Base(w.VMToolsPath))
+
 	w.WindowsConfiguration.Password = mapper.Get(vsphere.VspherePassword)
 	w.WindowsConfiguration.Username = mapper.Get(vsphere.VsphereUsername)
-	w.WindowsConfiguration.Datastore = mapper.Get(vsphere.VsphereDataStore)
-	w.WindowsConfiguration.Datacenter = mapper.Get(vsphere.VsphereDataCenter)
-	w.WindowsConfiguration.Network = mapper.Get(vsphere.VsphereNetwork)
-	w.WindowsConfiguration.ResourcePool = mapper.Get(vsphere.VsphereResourcePool)
 	w.WindowsConfiguration.VcenterServer = mapper.Get(vsphere.VsphereServer)
-	w.WindowsConfiguration.OsIsoPath = generateIsoPath(datastore, filepath.Base(w.OSImagePath))
-	w.WindowsConfiguration.VmtoolsIsoPath = generateIsoPath(datastore, filepath.Base(w.VMToolsPath))
+	w.WindowsConfiguration.Datacenter = mapper.Get(vsphere.VsphereDataCenter)
+
+	w.WindowsConfiguration.Runtime = "containerd"
+	w.WindowsConfiguration.ConvertToTemplate = "true"
+
+	// todo(knabben): pass it to paremeters
+	kubernetesVersion := "v1.23.8" // todo(knabben) - fix this
+	w.WindowsConfiguration.WindowsUpdatesCategories = "CriticalUpdates SecurityUpdates UpdateRollups"
+	w.WindowsConfiguration.UnattendTimezone = "GMT Standard Time" // todo(knabben) pass to parameter
+	w.WindowsConfiguration.KubernetesSemver = kubernetesVersion
+
+	const (
+		containerdFile = "cri-containerd-v1.6.6+vmware.2.windows-amd64.tar"
+		containerdHash = "a5348e2e7cc63194c2bb4575dd3c414a26c829380e72a81c3dc2d12454f67fcd"
+		antreaFile     = "antrea-windows-advanced.zip"
+	)
+
+	w.WindowsConfiguration.ContainerdURL = fmt.Sprintf("%s/files/containerd/%s", baseUrl, containerdFile)
+	w.WindowsConfiguration.ContainerdSha256Windows = containerdHash
+
 	w.WindowsConfiguration.InsecureConnection = "true"
 	w.WindowsConfiguration.LinkedClone = "false"
 	w.WindowsConfiguration.DisableHypervisor = "false"
@@ -78,18 +96,11 @@ func (w *WindowsSettings) GenerateJSONConfig(mapper *config.Mapper) ([]byte, err
 	w.WindowsConfiguration.Prepull = "false"
 	w.WindowsConfiguration.AdditionalExecutables = "true"
 
-	const (
-		containerdFile = "cri-containerd-v1.6.6+vmware.2.windows-amd64.tar"
-		containerdHash = "a5348e2e7cc63194c2bb4575dd3c414a26c829380e72a81c3dc2d12454f67fcd"
-		antreaFile     = "antrea-windows-advanced.zip"
-	)
-
 	w.WindowsConfiguration.KubernetesBaseURL = fmt.Sprintf("%s/files/kubernetes/", baseUrl)
-	w.WindowsConfiguration.ContainerdURL = fmt.Sprintf("%s/files/containerd/%s", baseUrl, containerdFile)
-	w.WindowsConfiguration.ContainerdSha256Windows = containerdHash
 	w.WindowsConfiguration.LoadAdditionalComponents = "true"
 	w.WindowsConfiguration.AdditionalExecutablesDestinationPath = "c:/k/antrea/"
 	w.WindowsConfiguration.AdditionalExecutablesList = fmt.Sprintf("%s/files/antrea-windows/%s", baseUrl, antreaFile)
+
 	return json.Marshal(w.WindowsConfiguration)
 }
 
@@ -102,5 +113,5 @@ func generateIsoPath(datastore, path string) string {
 
 // BaseBurritoURL returns the service endpoint for assets download
 func (w *WindowsSettings) BaseBurritoURL() string {
-	return fmt.Sprintf("http://%s:%d", w.NodeIP, NodePort)
+	return fmt.Sprintf("http://%s.%s.svc.cluster.local:%d", w.ServiceName, w.ServiceNamespace, w.ServicePort)
 }

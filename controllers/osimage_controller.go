@@ -22,6 +22,7 @@ import (
 	imagebuilderv1alpha1 "github.com/knabben/tkw/api/v1alpha1"
 	"github.com/knabben/tkw/pkg/config"
 	"github.com/knabben/tkw/pkg/vsphere"
+	"github.com/knabben/tkw/pkg/windows"
 	"github.com/vmware/govmomi/vim25/mo"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -62,6 +63,7 @@ type OSImageReconciler struct {
 
 func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	var cmap = &config.Mapper{}
+
 	logger := log.FromContext(ctx)
 	logger.Info("Reconciling object.", "req", req.NamespacedName)
 
@@ -87,7 +89,7 @@ func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	logger.Info("Checking assets deployment and execute.")
-	if err := r.checkAssetsDeployment(ctx, &o); err != nil {
+	if err := r.checkAssetsDeployment(ctx, cmap, &o); err != nil {
 		logger.Error(err, "Error getting assets objects.")
 		meta.SetStatusCondition(&o.Status.Conditions, metav1.Condition{
 			Type:    "OperatorDegraded",
@@ -108,41 +110,44 @@ func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	return ctrl.Result{Requeue: false}, nil
 }
 
-func (r *OSImageReconciler) checkAssetsDeployment(ctx context.Context, imagebuilder *imagebuilderv1alpha1.OSImage) error {
-	_, err := r.getOrCreateWindowsResourceBundle(ctx, imagebuilder)
+func (r *OSImageReconciler) checkAssetsDeployment(ctx context.Context, cmap *config.Mapper, imagebuilder *imagebuilderv1alpha1.OSImage) error {
+	logger := log.FromContext(ctx)
+
+	// Create the Windows resource bundle objects
+	wrb, err := r.getOrCreateWindowsResourceBundle(ctx, imagebuilder)
 	if err != nil {
 		return err
 	}
 
+	// Populate Windows configuration and save on a temporary file
+	logger.Info("Generating the windows.json file with correct parameters.")
+	settings := windows.NewWindowsSettings(
+		imagebuilder.Spec.WindowsISOPath,
+		imagebuilder.Spec.VMToolsPath,
+		wrb.Service.Name,
+		wrb.Service.Namespace,
+		wrb.Service.Spec.Ports[0].Port,
+		imagebuilder,
+	)
+
+	// Manage the configuration based on mgmt parameters
+	data, err := settings.GenerateJSONConfig(cmap)
+	fmt.Println(string(data))
+
 	/*
-			// 3. Populate Windows configuration and save on a temporary file
-			klog.Info(template.Info("Generate windows.json file with parameters"))
-			winSettings := windows.NewWindowsSettings(
-				viper.GetString("isopath"),
-				viper.GetString("vmtoolspath"),
-				nodeIP,
-			)
+		// 4. Image builder running on a docker
+		klog.Info(template.Info("Running Docker container with Image builder, be ready!"))
+		cli, err := docker.NewDockerClient(windowsFile)
+		config.ExplodeGraceful(err)
 
-			// Manage the configuration based on mgmt parameters
-			data, err := winSettings.GenerateJSONConfig(mapper)
-			config.ExplodeGraceful(err)
-			windowsFile, err := winSettings.SaveTempJSON(data)
-			config.ExplodeGraceful(err)
+		// Run the image-builder container.
+		var containerID stri ng
+		containerID, err = cli.Run(ctx)
+		config.ExplodeGraceful(err)
 
-			// 4. Image builder running on a docker
-			klog.Info(template.Info("Running Docker container with Image builder, be ready!"))
-			cli, err := docker.NewDockerClient(windowsFile)
-			config.ExplodeGraceful(err)
-
-			// Run the image-builder container.
-			var containerID string
-			containerID, err = cli.Run(ctx)
-			config.ExplodeGraceful(err)
-
-			// Iterate on logs and print output, monitor for errors.
-			err = monitorOutput(cli, containerID)
-			config.ExplodeGraceful(err)
-		},
+		// Iterate on logs and print output, monitor for errors.
+		err = monitorOutput(cli, containerID)
+		config.ExplodeGraceful(err)
 	*/
 	return nil
 }

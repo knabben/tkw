@@ -6,6 +6,7 @@ import (
 	"github.com/knabben/tkw/api/v1alpha1"
 	"github.com/knabben/tkw/controllers/assets"
 	"github.com/knabben/tkw/pkg/config"
+	"github.com/knabben/tkw/pkg/vsphere"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	errors "k8s.io/apimachinery/pkg/api/errors"
@@ -24,21 +25,20 @@ func (r *OSImageReconciler) getCredentials(ctx context.Context, cmap *config.Map
 	}
 
 	// Fetch vsphere-cloud-config and extract data
-	data := vsphereCM.Data["vsphere.conf"]
-	cmap.Set("vc", extractRValue(`\[VirtualCenter "(.*)"\]`, data))
-	cmap.Set("secret-name", extractRValue(`secret-name = "(.*)"`, data))
-	cmap.Set("secret-ns", extractRValue(`secret-namespace = "(.*)"`, data))
-
 	var vsphereSM = &v1.Secret{}
-	namespacedName := types.NamespacedName{Name: cmap.Get("secret-name"), Namespace: cmap.Get("secret-ns")}
+	data := vsphereCM.Data["vsphere.conf"]
+	cmap.Set(vsphere.VsphereServer, extractRValue(`\[VirtualCenter "(.*)"\]`, data))
+	namespacedName := types.NamespacedName{
+		Name:      extractRValue(`secret-name = "(.*)"`, data),
+		Namespace: extractRValue(`secret-namespace = "(.*)"`, data),
+	}
+
 	if err := r.Get(ctx, namespacedName, vsphereSM); err != nil {
 		return err
 	}
-	vcIP := cmap.Get("vc")
-	for _, s := range []string{"username", "password"} {
-		cmap.Set(s, string(vsphereSM.Data[fmt.Sprintf("%s.%s", vcIP, s)]))
-	}
-
+	vcIP := cmap.Get(vsphere.VsphereServer)
+	cmap.Set(vsphere.VsphereUsername, string(vsphereSM.Data[fmt.Sprintf("%s.%s", vcIP, "username")]))
+	cmap.Set(vsphere.VspherePassword, string(vsphereSM.Data[fmt.Sprintf("%s.%s", vcIP, "password")]))
 	return nil
 }
 
