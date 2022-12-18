@@ -56,7 +56,7 @@ func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	var o imagebuilderv1alpha1.OSImage
 	if err := r.Get(ctx, req.NamespacedName, &o); err != nil {
 		logger.Error(err, "unable to get OSImage object")
-		return ctrl.Result{}, err
+		return ctrl.Result{}, nil
 	}
 
 	if err := r.getCredentials(ctx, cmap); err != nil {

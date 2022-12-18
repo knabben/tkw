@@ -31,7 +31,7 @@ type WindowsConfiguration struct {
 	PauseImage                           string `json:"pause_image"`
 	Prepull                              string `json:"prepull"`
 	AdditionalPrepullImages              string `json:"additional_prepull_images"`
-	AdditionalDowloadFiles               string `json:"additional_download_files"`
+	AdditionalDownloadFiles               string `json:"additional_download_files"`
 	AdditionalExecutables                string `json:"additional_executables"`
 	AdditionalExecutablesDestinationPath string `json:"additional_executables_destination_path"`
 	AdditionalExecutablesList            string `json:"additional_executables_list"`
