@@ -4,4 +4,5 @@ metadata:
   name: windows-image
   namespace: tkw-system
 spec:
-  # TODO(user): Add fields here
+  windowsISOPath: "./isos/win.iso"
+  vmtoolsPath: "./isos/vmtools.iso"

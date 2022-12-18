@@ -20,30 +20,33 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // OSImageSpec defines the desired state of OSImage
 type OSImageSpec struct {
 	WindowsISOPath      string `json:"windowsISOPath"`
 	VMToolsPath         string `json:"vmtoolsPath"`
 
-	// +kubebuilder:default:=dc0
+	// +kubebuilder:default=dc0
+	// +kubebuilder:validation:Optional
 	VsphereDatacenter   string `json:"vsphereDatacenter"`
 
-	// +kubebuilder:default:=folder0
+	// +kubebuilder:default=folder0
+	// +kubebuilder:validation:Optional
 	VSphereFolder       string `json:"vsphereFolder"`
 
-	// +kubebuilder:default:=sharedVmfs-0
+	// +kubebuilder:default=sharedVmfs-0
+	// +kubebuilder:validation:Optional
 	VSphereDataStore    string `json:"vsphereDatastore"`
 
-	// +kubebuilder:default:=VM Network
+	// +kubebuilder:default=VM Network
+	// +kubebuilder:validation:Optional
 	VSphereNetwork      string `json:"vsphereNetwork"`
 
-	// +kubebuilder:default:=rp0
+	// +kubebuilder:default=rp0
+	// +kubebuilder:validation:Optional
 	VSphereResourcePool string `json:"vsphereResourcePool"`
 
-	// +kubebuilder:default:=cluster0
+	// +kubebuilder:default=cluster0
+	// +kubebuilder:validation:Optional
 	VSphereCluster      string `json:"vsphereCluster"`
 }
 
