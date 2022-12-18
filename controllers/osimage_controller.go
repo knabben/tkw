@@ -18,19 +18,29 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	imagebuilderv1alpha1 "github.com/knabben/tkw/api/v1alpha1"
 	"github.com/knabben/tkw/pkg/config"
 	"github.com/knabben/tkw/pkg/vsphere"
 	"github.com/vmware/govmomi/vim25/mo"
 	appsv1 "k8s.io/api/apps/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"time"
 )
 
 const (
 	TKG_NAMESPACE = "kube-system"
+
+	ReasonCRNotAvailable  = "OperatorResourceNotAvailable"
+	ReasonDeploymentNotAvailable = "DeploymentNotAvailable"
+	ReasonSucceeded  = "OperatorSucceeded"
 )
 
 // OSImageReconciler reconciles a OSImage object
@@ -40,6 +50,7 @@ type OSImageReconciler struct {
 	Credentials *config.Mapper
 }
 
+// todo(knabben): review the correct required RBACs
 //+kubebuilder:rbac:groups=imagebuilder.tanzu.opssec.in,resources=osimages,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=imagebuilder.tanzu.opssec.in,resources=osimages/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=imagebuilder.tanzu.opssec.in,resources=osimages/finalizers,verbs=update
@@ -55,9 +66,19 @@ func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	logger.Info("Reconciling object.", "req", req.NamespacedName)
 
 	var o imagebuilderv1alpha1.OSImage
-	if err := r.Get(ctx, req.NamespacedName, &o); err != nil {
-		logger.Error(err, "unable to get OSImage object")
+	if err := r.Get(ctx, req.NamespacedName, &o); err != nil && errors.IsNotFound(err) {
+		logger.Info("Resource not found.")
 		return ctrl.Result{}, nil
+	} else if err != nil {
+		logger.Error(err, "Error getting object resource.")
+		meta.SetStatusCondition(&o.Status.Conditions, metav1.Condition{
+			Type:    "OperatorDegraded",
+			Status:  metav1.ConditionTrue,
+			Reason:  ReasonCRNotAvailable,
+			LastTransitionTime: metav1.NewTime(time.Now()),
+			Message: fmt.Sprintf("unable to get CR: %s", err.Error()),
+		})
+		return ctrl.Result{}, utilerrors.NewAggregate([]error{err, r.Status().Update(ctx, &o)})
 	}
 
 	if err := r.getCredentials(ctx, cmap); err != nil {
@@ -67,7 +88,15 @@ func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	logger.Info("Checking assets deployment and execute.")
 	if err := r.checkAssetsDeployment(ctx, &o); err != nil {
-		return ctrl.Result{}, nil
+		logger.Error(err, "Error getting assets objects.")
+		meta.SetStatusCondition(&o.Status.Conditions, metav1.Condition{
+			Type:    "OperatorDegraded",
+			Status:  metav1.ConditionTrue,
+			Reason:  ReasonDeploymentNotAvailable,
+			LastTransitionTime: metav1.NewTime(time.Now()),
+			Message: fmt.Sprintf("unable to get deployment: %s", err.Error()),
+		})
+		return ctrl.Result{}, utilerrors.NewAggregate([]error{err, r.Status().Update(ctx, &o)})
 	}
 
 	// reconcile the status with the machine find
@@ -84,6 +113,7 @@ func (r *OSImageReconciler) checkAssetsDeployment(ctx context.Context, imagebuil
 	if err != nil {
 		return err
 	}
+
 	/*
 			// 3. Populate Windows configuration and save on a temporary file
 			klog.Info(template.Info("Generate windows.json file with parameters"))
@@ -128,38 +158,47 @@ func (r *OSImageReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func (r *OSImageReconciler) reconcileStatus(ctx context.Context, o *imagebuilderv1alpha1.OSImage, cmap *config.Mapper) error {
 	var vms []mo.VirtualMachine
 
-	// Connect and filter DataCenter.
-	client, dc, err := vsphere.ConnectFilterDC(ctx, cmap.Get("vc"), cmap.Get("username"), cmap.Get("password"))
-	if err != nil {
-		return err
-	}
-
-	// Get templates from vSphere and DC.
-	if vms, err = client.GetImportedVirtualMachinesImages(ctx, dc.Moid); err != nil {
-		return err
-	}
-
-	// Iterate on VMS and print table by VM
-	var osTemplates = make([]imagebuilderv1alpha1.OSImageTemplates, len(vms))
-	for i, vm := range vms {
-		osTemplates[i].Name = vm.Name
-		properties := client.GetVMMetadata(&vm)
-		if properties != nil {
-			osTemplates[i].BuildDate = properties["BUILD_DATE"]
-			osTemplates[i].BuildTimestamp = properties["BUILD_TIMESTAMP"]
-			osTemplates[i].CNIVersion = properties["CNI_VERSION"]
-			osTemplates[i].ContainerDVersion = properties["CONTAINERD_VERSION"]
-			osTemplates[i].DistroArch = properties["DISTRO_ARCH"]
-			osTemplates[i].DistroName = properties["DISTRO_NAME"]
-			osTemplates[i].DistroVersion = properties["DISTRO_VERSION"]
-			osTemplates[i].ImageBuilderVersion = properties["IMAGE_BUILDER_VERSION"]
-			osTemplates[i].KubernetesSemVer = properties["KUBERNETES_SEMVER"]
-			osTemplates[i].KubernetesSourceType = properties["KUBERNETES_SOURCE_TYPE"]
+	if len(o.Status.OSTemplates) < 1 {
+		// Connect and filter DataCenter.
+		client, dc, err := vsphere.ConnectFilterDC(ctx, cmap.Get("vc"), cmap.Get("username"), cmap.Get("password"))
+		if err != nil {
+			return err
 		}
+
+		// Get templates from vSphere and DC.
+		if vms, err = client.GetImportedVirtualMachinesImages(ctx, dc.Moid); err != nil {
+			return err
+		}
+
+		// Iterate on VMS and print table by VM
+		var osTemplates = make([]imagebuilderv1alpha1.OSImageTemplates, len(vms))
+		for i, vm := range vms {
+			osTemplates[i].Name = vm.Name
+			properties := client.GetVMMetadata(&vm)
+			if properties != nil {
+				osTemplates[i].BuildDate = properties["BUILD_DATE"]
+				osTemplates[i].BuildTimestamp = properties["BUILD_TIMESTAMP"]
+				osTemplates[i].CNIVersion = properties["CNI_VERSION"]
+				osTemplates[i].ContainerDVersion = properties["CONTAINERD_VERSION"]
+				osTemplates[i].DistroArch = properties["DISTRO_ARCH"]
+				osTemplates[i].DistroName = properties["DISTRO_NAME"]
+				osTemplates[i].DistroVersion = properties["DISTRO_VERSION"]
+				osTemplates[i].ImageBuilderVersion = properties["IMAGE_BUILDER_VERSION"]
+				osTemplates[i].KubernetesSemVer = properties["KUBERNETES_SEMVER"]
+				osTemplates[i].KubernetesSourceType = properties["KUBERNETES_SOURCE_TYPE"]
+			}
+		}
+		o.Status.OSTemplates = osTemplates
 	}
 
-	o.Status.OSTemplates = osTemplates
-	if err := r.Status().Update(context.Background(), o); err != nil {
+	meta.SetStatusCondition(&o.Status.Conditions, metav1.Condition{
+		Type:    "OperatorDegraded",
+		Status:  metav1.ConditionFalse,
+		LastTransitionTime: metav1.NewTime(time.Now()),
+		Reason:  ReasonSucceeded,
+		Message: "operator successfully reconciling.",
+	})
+	if err := r.Status().Update(ctx, o); err != nil {
 		return err
 	}
 	return nil
