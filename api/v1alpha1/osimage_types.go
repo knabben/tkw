@@ -30,14 +30,19 @@ type OSImageSpec struct {
 
 	// +kubebuilder:default:=dc0
 	VsphereDatacenter   string `json:"vsphereDatacenter"`
+
 	// +kubebuilder:default:=folder0
 	VSphereFolder       string `json:"vsphereFolder"`
-	// +kubebuilder:default:="sharedVmfs-0"
+
+	// +kubebuilder:default:=sharedVmfs-0
 	VSphereDataStore    string `json:"vsphereDatastore"`
-	// +kubebuilder:default:="VM Network"
+
+	// +kubebuilder:default:=VM Network
 	VSphereNetwork      string `json:"vsphereNetwork"`
+
 	// +kubebuilder:default:=rp0
 	VSphereResourcePool string `json:"vsphereResourcePool"`
+
 	// +kubebuilder:default:=cluster0
 	VSphereCluster      string `json:"vsphereCluster"`
 }

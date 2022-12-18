@@ -62,12 +62,12 @@ type OSImageReconciler struct {
 //+kubebuilder:rbac:groups="apps",resources=deployments,verbs="*"
 
 func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	var cmap = &config.Mapper{}
-
 	logger := log.FromContext(ctx)
 	logger.Info("Reconciling object.", "req", req.NamespacedName)
 
+	var cmap = &config.Mapper{}
 	var o imagebuilderv1alpha1.OSImage
+
 	if err := r.Get(ctx, req.NamespacedName, &o); err != nil && errors.IsNotFound(err) {
 		logger.Info("Resource not found.")
 		return ctrl.Result{}, nil
@@ -107,7 +107,7 @@ func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, err
 	}
 
-	return ctrl.Result{Requeue: false}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *OSImageReconciler) checkAssetsDeployment(ctx context.Context, cmap *config.Mapper, imagebuilder *imagebuilderv1alpha1.OSImage) error {
@@ -150,13 +150,16 @@ func (r *OSImageReconciler) reconcileStatus(ctx context.Context, o *imagebuilder
 
 	if len(o.Status.OSTemplates) < 1 {
 		// Connect and filter DataCenter.
-		client, dc, err := vsphere.ConnectFilterDC(ctx, cmap.Get("vc"), cmap.Get("username"), cmap.Get("password"))
+		vc, dc, err := vsphere.ConnectFilterDC(ctx,
+			cmap.Get(vsphere.VsphereServer),
+			cmap.Get(vsphere.VsphereUsername),
+			cmap.Get(vsphere.VspherePassword))
 		if err != nil {
 			return err
 		}
 
 		// Get templates from vSphere and DC.
-		if vms, err = client.GetImportedVirtualMachinesImages(ctx, dc.Moid); err != nil {
+		if vms, err = vc.GetImportedVirtualMachinesImages(ctx, dc.Moid); err != nil {
 			return err
 		}
 
@@ -164,7 +167,7 @@ func (r *OSImageReconciler) reconcileStatus(ctx context.Context, o *imagebuilder
 		var osTemplates = make([]imagebuilderv1alpha1.OSImageTemplates, len(vms))
 		for i, vm := range vms {
 			osTemplates[i].Name = vm.Name
-			properties := client.GetVMMetadata(&vm)
+			properties := vc.GetVMMetadata(&vm)
 			if properties != nil {
 				osTemplates[i].BuildDate = properties["BUILD_DATE"]
 				osTemplates[i].BuildTimestamp = properties["BUILD_TIMESTAMP"]
