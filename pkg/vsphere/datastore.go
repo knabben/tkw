@@ -4,7 +4,6 @@ package vsphere
 
 import (
 	"context"
-	"fmt"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/types"
 	"path"
@@ -19,23 +18,6 @@ func Browser(ds *object.Datastore) (*object.HostDatastoreBrowser, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultAPITimeout)
 	defer cancel()
 	return ds.Browser(ctx)
-}
-
-// FileExists takes a path in the datastore and checks to see if it exists.
-//
-// The path should be a bare path, not a datastore path. Globs are not allowed.
-func FileExists(ds *object.Datastore, name string) (bool, error) {
-	files, err := SearchDatastore(ds, name)
-	if err != nil {
-		return false, err
-	}
-	if len(files) > 1 {
-		return false, fmt.Errorf("multiple results returned for %q in datastore %q, use a more specific search", name, ds)
-	}
-	if len(files) < 1 {
-		return false, nil
-	}
-	return path.Base(name) == files[0].Path, nil
 }
 
 func searchDatastore(ds *object.Datastore, name string) (*types.HostDatastoreBrowserSearchResults, error) {

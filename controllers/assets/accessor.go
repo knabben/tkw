@@ -20,6 +20,7 @@ var (
 const (
 	BUILDER_DEPLOYMENT = "manifests/builder-deployment.yaml"
 	BUILDER_SERVICE    = "manifests/builder-svc.yaml"
+	IB_CONFIG = "manifests/ib-configmap.yaml"
 )
 
 func init() {
@@ -33,7 +34,7 @@ func init() {
 
 // ObjectTypes defines the generic types available
 type ObjectTypes interface {
-	*appsv1.Deployment | *v1.Service | *v1.Namespace
+	*appsv1.Deployment | *v1.Service | *v1.Namespace | *v1.ConfigMap
 }
 
 // YAMLAccessor implement the definition of YAML accessor

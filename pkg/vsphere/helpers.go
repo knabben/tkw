@@ -11,7 +11,7 @@ import (
 )
 
 // ConnectFilterDC connects on vSphere and login using credentials
-func ConnectFilterDC(ctx context.Context, vc, user, pass string) (Client, *models.VSphereDatacenter, error) {
+func ConnectFilterDC(ctx context.Context, vc, user, pass, dcName string) (Client, *models.VSphereDatacenter, error) {
 	var (
 		client Client
 		err    error
@@ -23,7 +23,7 @@ func ConnectFilterDC(ctx context.Context, vc, user, pass string) (Client, *model
 
 	// Search for the existence of the datacenter.
 	var dc *models.VSphereDatacenter
-	dc, err = FilterDatacenter(ctx, client, "/dc0")
+	dc, err = FilterDatacenter(ctx, client, dcName)
 	if err != nil {
 		return nil, nil, err
 	}
