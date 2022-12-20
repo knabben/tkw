@@ -95,6 +95,22 @@ func (r *OSImageReconciler) getOrCreateWindowsResourceBundle(ctx context.Context
 	}, nil
 }
 
+func (r *OSImageReconciler) getOrCreateWindowsImageBuilder(ctx context.Context, config string, imagebuilder *v1alpha1.OSImage) error {
+	// Check for Windows resource bundle deployment and create
+	configmap := assets.YAMLAccessor[*v1.ConfigMap]{}
+	cmObject, err := configmap.GetDecodedObject(assets.IB_CONFIG, v1.SchemeGroupVersion)
+	if err != nil {
+		return err
+	}
+
+	// Save json data in the object and create the configmap
+	cmObject.Data = map[string]string{"windows.json": config}
+	if _, err := r.getOrCreate(ctx, cmObject); err != nil {
+		return err
+	}
+	return nil
+}
+
 func extractRValue(v, d string) string {
 	var (
 		re  *regexp.Regexp

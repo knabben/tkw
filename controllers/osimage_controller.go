@@ -39,9 +39,9 @@ import (
 const (
 	TKG_NAMESPACE = "kube-system"
 
-	ReasonCRNotAvailable  = "OperatorResourceNotAvailable"
+	ReasonCRNotAvailable         = "OperatorResourceNotAvailable"
 	ReasonDeploymentNotAvailable = "DeploymentNotAvailable"
-	ReasonSucceeded  = "OperatorSucceeded"
+	ReasonSucceeded              = "OperatorSucceeded"
 )
 
 // OSImageReconciler reconciles a OSImage object
@@ -56,7 +56,7 @@ type OSImageReconciler struct {
 //+kubebuilder:rbac:groups=imagebuilder.tanzu.opssec.in,resources=osimages/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=imagebuilder.tanzu.opssec.in,resources=osimages/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources=namespaces,verbs=create;get;list
-//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;read;list;watch
+//+kubebuilder:rbac:groups="",resources=configmaps,verbs=get;read;list;watch;create
 //+kubebuilder:rbac:groups="",resources=secrets,verbs=get;read;list;watch
 //+kubebuilder:rbac:groups="",resources=services,verbs="*"
 //+kubebuilder:rbac:groups="apps",resources=deployments,verbs="*"
@@ -74,11 +74,11 @@ func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	} else if err != nil {
 		logger.Error(err, "Error getting object resource.")
 		meta.SetStatusCondition(&o.Status.Conditions, metav1.Condition{
-			Type:    "OperatorDegraded",
-			Status:  metav1.ConditionTrue,
-			Reason:  ReasonCRNotAvailable,
+			Type:               "OperatorDegraded",
+			Status:             metav1.ConditionTrue,
+			Reason:             ReasonCRNotAvailable,
 			LastTransitionTime: metav1.NewTime(time.Now()),
-			Message: fmt.Sprintf("unable to get CR: %s", err.Error()),
+			Message:            fmt.Sprintf("unable to get CR: %s", err.Error()),
 		})
 		return ctrl.Result{}, utilerrors.NewAggregate([]error{err, r.Status().Update(ctx, &o)})
 	}
@@ -92,11 +92,11 @@ func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	if err := r.checkAssetsDeployment(ctx, cmap, &o); err != nil {
 		logger.Error(err, "Error getting assets objects.")
 		meta.SetStatusCondition(&o.Status.Conditions, metav1.Condition{
-			Type:    "OperatorDegraded",
-			Status:  metav1.ConditionTrue,
-			Reason:  ReasonDeploymentNotAvailable,
+			Type:               "OperatorDegraded",
+			Status:             metav1.ConditionTrue,
+			Reason:             ReasonDeploymentNotAvailable,
 			LastTransitionTime: metav1.NewTime(time.Now()),
-			Message: fmt.Sprintf("unable to get deployment: %s", err.Error()),
+			Message:            fmt.Sprintf("unable to get deployment: %s", err.Error()),
 		})
 		return ctrl.Result{}, utilerrors.NewAggregate([]error{err, r.Status().Update(ctx, &o)})
 	}
@@ -131,10 +131,12 @@ func (r *OSImageReconciler) checkAssetsDeployment(ctx context.Context, cmap *con
 	)
 
 	// Manage the configuration based on mgmt parameters
-	data, _ := settings.GenerateJSONConfig(cmap)
-	fmt.Println(string(data))
+	ic, err := settings.GenerateJSONConfig(cmap)
+	if err != nil {
+		return err
+	}
 
-	return nil
+	return r.getOrCreateWindowsImageBuilder(ctx, string(ic), imagebuilder)
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -153,7 +155,9 @@ func (r *OSImageReconciler) reconcileStatus(ctx context.Context, o *imagebuilder
 		vc, dc, err := vsphere.ConnectFilterDC(ctx,
 			cmap.Get(vsphere.VsphereServer),
 			cmap.Get(vsphere.VsphereUsername),
-			cmap.Get(vsphere.VspherePassword))
+			cmap.Get(vsphere.VspherePassword),
+			cmap.Get(vsphere.VsphereDataCenter),
+		)
 		if err != nil {
 			return err
 		}
@@ -185,14 +189,12 @@ func (r *OSImageReconciler) reconcileStatus(ctx context.Context, o *imagebuilder
 	}
 
 	meta.SetStatusCondition(&o.Status.Conditions, metav1.Condition{
-		Type:    "OperatorDegraded",
-		Status:  metav1.ConditionFalse,
+		Type:               "OperatorDegraded",
+		Status:             metav1.ConditionFalse,
 		LastTransitionTime: metav1.NewTime(time.Now()),
-		Reason:  ReasonSucceeded,
-		Message: "operator successfully reconciling.",
+		Reason:             ReasonSucceeded,
+		Message:            "operator successfully reconciling.",
 	})
-	if err := r.Status().Update(ctx, o); err != nil {
-		return err
-	}
-	return nil
+
+	return r.Status().Update(ctx, o)
 }
