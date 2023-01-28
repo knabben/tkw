@@ -45,6 +45,12 @@ rules:
   verbs:
   - '*'
 - apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - '*'
+- apiGroups:
   - imagebuilder.tanzu.opssec.in
   resources:
   - osimages

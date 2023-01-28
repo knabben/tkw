@@ -8,6 +8,7 @@ import (
 	"github.com/knabben/tkw/pkg/config"
 	"github.com/knabben/tkw/pkg/vsphere"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	errors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -32,6 +33,9 @@ func (r *OSImageReconciler) getCredentials(ctx context.Context, cmap *config.Map
 		Name:      extractRValue(`secret-name = "(.*)"`, data),
 		Namespace: extractRValue(`secret-namespace = "(.*)"`, data),
 	}
+
+	// Set DataCenter from configMap
+	cmap.Set(vsphere.VsphereDataCenter, extractRValue(`datacenters = "(.*)"`, data))
 
 	if err := r.Get(ctx, namespacedName, vsphereSM); err != nil {
 		return err
@@ -104,11 +108,22 @@ func (r *OSImageReconciler) getOrCreateWindowsImageBuilder(ctx context.Context, 
 		return err
 	}
 
-	// Save json data in the object and create the configmap
+	// Save json data in the object and create the configmap.
 	cmObject.Data = map[string]string{"windows.json": config}
 	if _, err := r.getOrCreate(ctx, cmObject); err != nil {
 		return err
 	}
+
+	// Creates the Job from spec file.
+	job := assets.YAMLAccessor[*batchv1.Job]{}
+	jobObject, err := job.GetDecodedObject(assets.IB_JOB, batchv1.SchemeGroupVersion)
+	if err != nil {
+		return err
+	}
+	if _, err := r.getOrCreate(ctx, jobObject); err != nil {
+		return err
+	}
+
 	return nil
 }
 

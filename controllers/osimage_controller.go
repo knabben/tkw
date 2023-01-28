@@ -60,6 +60,7 @@ type OSImageReconciler struct {
 //+kubebuilder:rbac:groups="",resources=secrets,verbs=get;read;list;watch
 //+kubebuilder:rbac:groups="",resources=services,verbs="*"
 //+kubebuilder:rbac:groups="apps",resources=deployments,verbs="*"
+//+kubebuilder:rbac:groups="batch",resources=jobs,verbs="*"
 
 func (r *OSImageReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
@@ -121,23 +122,22 @@ func (r *OSImageReconciler) checkAssetsDeployment(ctx context.Context, cmap *con
 
 	// Populate Windows configuration and save on a temporary file
 	logger.Info("Generating the windows.json file with correct parameters.")
-	settings := windows.NewWindowsSettings(
+
+	// Manage the configuration based on mgmt parameters and specs
+	// this configMap will be mounted in the Job as a volume.
+	settings, err := windows.NewWindowsSettings(
 		imagebuilder.Spec.WindowsISOPath,
 		imagebuilder.Spec.VMToolsPath,
 		wrb.Service.Name,
 		wrb.Service.Namespace,
 		wrb.Service.Spec.Ports[0].Port,
 		imagebuilder,
-	)
-
-	// Manage the configuration based on mgmt parameters and specs
-	// this configMap will be mounted in the Job as a volume.
-	ic, err := settings.GenerateJSONConfig(cmap)
+	).GenerateJSONConfig(cmap)
 	if err != nil {
 		return err
 	}
 
-	return r.getOrCreateWindowsImageBuilder(ctx, string(ic), imagebuilder)
+	return r.getOrCreateWindowsImageBuilder(ctx, string(settings), imagebuilder)
 }
 
 // SetupWithManager sets up the controller with the Manager.
