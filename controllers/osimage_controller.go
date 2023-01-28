@@ -122,7 +122,7 @@ func (r *OSImageReconciler) checkAssetsDeployment(ctx context.Context, cmap *con
 	}
 
 	// Populate Windows configuration and save on a temporary file
-	logger.Info("Generating the windows.json file with correct parameters.")
+	logger.Info("Building windows.json file on memory.")
 
 	// Manage the configuration based on mgmt parameters and specs
 	// this configMap will be mounted in the Job as a volume.

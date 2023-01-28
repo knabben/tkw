@@ -120,7 +120,6 @@ func (r *OSImageReconciler) getOrCreateWindowsImageBuilder(ctx context.Context, 
 	if err != nil {
 		return err
 	}
-
 	if err := ctrl.SetControllerReference(ib, jobObject, r.Scheme); err != nil {
 		return err
 	}
