@@ -8,6 +8,7 @@ import (
 	"github.com/knabben/tkw/pkg/config"
 	"github.com/knabben/tkw/pkg/vsphere"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	errors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -32,6 +33,9 @@ func (r *OSImageReconciler) getCredentials(ctx context.Context, cmap *config.Map
 		Name:      extractRValue(`secret-name = "(.*)"`, data),
 		Namespace: extractRValue(`secret-namespace = "(.*)"`, data),
 	}
+
+	// Set DataCenter from configMap
+	cmap.Set(vsphere.VsphereDataCenter, extractRValue(`datacenters = "(.*)"`, data))
 
 	if err := r.Get(ctx, namespacedName, vsphereSM); err != nil {
 		return err
@@ -64,24 +68,25 @@ type WindowsResourceBundle struct {
 	Service    *v1.Service
 }
 
-func (r *OSImageReconciler) getOrCreateWindowsResourceBundle(ctx context.Context, imagebuilder *v1alpha1.OSImage) (*WindowsResourceBundle, error) {
+// getOrCreateWindowsResourceBundle returns the Windows resource bundle specification
+func (r *OSImageReconciler) getOrCreateWindowsResourceBundle(ctx context.Context, ib *v1alpha1.OSImage) (*WindowsResourceBundle, error) {
 	// Check for Windows resource bundle deployment and create
 	deploy := assets.YAMLAccessor[*appsv1.Deployment]{}
-	deObject, err := deploy.GetDecodedObject(assets.BUILDER_DEPLOYMENT, appsv1.SchemeGroupVersion)
+	depObject, err := deploy.GetDecodedObject(assets.BUILDER_DEPLOYMENT, appsv1.SchemeGroupVersion)
 	if err != nil {
 		return nil, err
 	}
 
 	// Check for the Windows resource bundle service and create
 	svc := assets.YAMLAccessor[*v1.Service]{}
-	svObject, err := svc.GetDecodedObject(assets.BUILDER_SERVICE, v1.SchemeGroupVersion)
+	svcObject, err := svc.GetDecodedObject(assets.BUILDER_SERVICE, v1.SchemeGroupVersion)
 	if err != nil {
 		return nil, err
 	}
 
 	// Set controller reference and create the object
-	for _, x := range []client.Object{deObject, svObject} {
-		if err := ctrl.SetControllerReference(imagebuilder, x, r.Scheme); err != nil {
+	for _, x := range []client.Object{depObject, svcObject} {
+		if err := ctrl.SetControllerReference(ib, x, r.Scheme); err != nil {
 			return nil, err
 		}
 		if _, err := r.getOrCreate(ctx, x); err != nil {
@@ -90,12 +95,12 @@ func (r *OSImageReconciler) getOrCreateWindowsResourceBundle(ctx context.Context
 	}
 
 	return &WindowsResourceBundle{
-		Deployment: deObject,
-		Service:    svObject,
+		Deployment: depObject,
+		Service:    svcObject,
 	}, nil
 }
 
-func (r *OSImageReconciler) getOrCreateWindowsImageBuilder(ctx context.Context, config string, imagebuilder *v1alpha1.OSImage) error {
+func (r *OSImageReconciler) getOrCreateWindowsImageBuilder(ctx context.Context, config string, ib *v1alpha1.OSImage) error {
 	// Check for Windows resource bundle deployment and create
 	configmap := assets.YAMLAccessor[*v1.ConfigMap]{}
 	cmObject, err := configmap.GetDecodedObject(assets.IB_CONFIG, v1.SchemeGroupVersion)
@@ -103,11 +108,25 @@ func (r *OSImageReconciler) getOrCreateWindowsImageBuilder(ctx context.Context, 
 		return err
 	}
 
-	// Save json data in the object and create the configmap
+	// Save json data in the object and create the configmap.
 	cmObject.Data = map[string]string{"windows.json": config}
 	if _, err := r.getOrCreate(ctx, cmObject); err != nil {
 		return err
 	}
+
+	// Creates the Job from spec file.
+	job := assets.YAMLAccessor[*batchv1.Job]{}
+	jobObject, err := job.GetDecodedObject(assets.IB_JOB, batchv1.SchemeGroupVersion)
+	if err != nil {
+		return err
+	}
+	if err := ctrl.SetControllerReference(ib, jobObject, r.Scheme); err != nil {
+		return err
+	}
+	if _, err := r.getOrCreate(ctx, jobObject); err != nil {
+		return err
+	}
+
 	return nil
 }
 
