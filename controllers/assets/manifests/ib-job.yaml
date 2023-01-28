@@ -1,14 +1,14 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: pi
+  name: ib-job
   namespace: tkw-system
 spec:
   template:
     spec:
       containers:
-        - name: pi
-          image: perl:5.34.0
-          command: ["perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
+        - name: ibcontainer
+          image: projects-stg.registry.vmware.com/tkg/image-builder:v0.1.13_vmware.2
+          args: ["build-node-ova-vsphere-windows-2019"]
       restartPolicy: Never
   backoffLimit: 4

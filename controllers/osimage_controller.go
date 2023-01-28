@@ -25,6 +25,7 @@ import (
 	"github.com/knabben/tkw/pkg/windows"
 	"github.com/vmware/govmomi/vim25/mo"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -145,6 +146,7 @@ func (r *OSImageReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&imagebuilderv1alpha1.OSImage{}).
 		Owns(&appsv1.Deployment{}).
+		Owns(&batchv1.Job{}).
 		Complete(r)
 }
 

@@ -69,7 +69,7 @@ type WindowsResourceBundle struct {
 }
 
 // getOrCreateWindowsResourceBundle returns the Windows resource bundle specification
-func (r *OSImageReconciler) getOrCreateWindowsResourceBundle(ctx context.Context, imagebuilder *v1alpha1.OSImage) (*WindowsResourceBundle, error) {
+func (r *OSImageReconciler) getOrCreateWindowsResourceBundle(ctx context.Context, ib *v1alpha1.OSImage) (*WindowsResourceBundle, error) {
 	// Check for Windows resource bundle deployment and create
 	deploy := assets.YAMLAccessor[*appsv1.Deployment]{}
 	depObject, err := deploy.GetDecodedObject(assets.BUILDER_DEPLOYMENT, appsv1.SchemeGroupVersion)
@@ -86,7 +86,7 @@ func (r *OSImageReconciler) getOrCreateWindowsResourceBundle(ctx context.Context
 
 	// Set controller reference and create the object
 	for _, x := range []client.Object{depObject, svcObject} {
-		if err := ctrl.SetControllerReference(imagebuilder, x, r.Scheme); err != nil {
+		if err := ctrl.SetControllerReference(ib, x, r.Scheme); err != nil {
 			return nil, err
 		}
 		if _, err := r.getOrCreate(ctx, x); err != nil {
@@ -100,7 +100,7 @@ func (r *OSImageReconciler) getOrCreateWindowsResourceBundle(ctx context.Context
 	}, nil
 }
 
-func (r *OSImageReconciler) getOrCreateWindowsImageBuilder(ctx context.Context, config string, imagebuilder *v1alpha1.OSImage) error {
+func (r *OSImageReconciler) getOrCreateWindowsImageBuilder(ctx context.Context, config string, ib *v1alpha1.OSImage) error {
 	// Check for Windows resource bundle deployment and create
 	configmap := assets.YAMLAccessor[*v1.ConfigMap]{}
 	cmObject, err := configmap.GetDecodedObject(assets.IB_CONFIG, v1.SchemeGroupVersion)
@@ -118,6 +118,10 @@ func (r *OSImageReconciler) getOrCreateWindowsImageBuilder(ctx context.Context, 
 	job := assets.YAMLAccessor[*batchv1.Job]{}
 	jobObject, err := job.GetDecodedObject(assets.IB_JOB, batchv1.SchemeGroupVersion)
 	if err != nil {
+		return err
+	}
+
+	if err := ctrl.SetControllerReference(ib, jobObject, r.Scheme); err != nil {
 		return err
 	}
 	if _, err := r.getOrCreate(ctx, jobObject); err != nil {
