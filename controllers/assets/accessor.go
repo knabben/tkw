@@ -20,7 +20,7 @@ var (
 const (
 	BUILDER_DEPLOYMENT = "manifests/builder-deployment.yaml"
 	BUILDER_SERVICE    = "manifests/builder-svc.yaml"
-	IB_CONFIG = "manifests/ib-configmap.yaml"
+	IB_CONFIG          = "manifests/ib-configmap.yaml"
 )
 
 func init() {

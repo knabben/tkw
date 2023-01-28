@@ -64,23 +64,24 @@ type WindowsResourceBundle struct {
 	Service    *v1.Service
 }
 
+// getOrCreateWindowsResourceBundle returns the Windows resource bundle specification
 func (r *OSImageReconciler) getOrCreateWindowsResourceBundle(ctx context.Context, imagebuilder *v1alpha1.OSImage) (*WindowsResourceBundle, error) {
 	// Check for Windows resource bundle deployment and create
 	deploy := assets.YAMLAccessor[*appsv1.Deployment]{}
-	deObject, err := deploy.GetDecodedObject(assets.BUILDER_DEPLOYMENT, appsv1.SchemeGroupVersion)
+	depObject, err := deploy.GetDecodedObject(assets.BUILDER_DEPLOYMENT, appsv1.SchemeGroupVersion)
 	if err != nil {
 		return nil, err
 	}
 
 	// Check for the Windows resource bundle service and create
 	svc := assets.YAMLAccessor[*v1.Service]{}
-	svObject, err := svc.GetDecodedObject(assets.BUILDER_SERVICE, v1.SchemeGroupVersion)
+	svcObject, err := svc.GetDecodedObject(assets.BUILDER_SERVICE, v1.SchemeGroupVersion)
 	if err != nil {
 		return nil, err
 	}
 
 	// Set controller reference and create the object
-	for _, x := range []client.Object{deObject, svObject} {
+	for _, x := range []client.Object{depObject, svcObject} {
 		if err := ctrl.SetControllerReference(imagebuilder, x, r.Scheme); err != nil {
 			return nil, err
 		}
@@ -90,8 +91,8 @@ func (r *OSImageReconciler) getOrCreateWindowsResourceBundle(ctx context.Context
 	}
 
 	return &WindowsResourceBundle{
-		Deployment: deObject,
-		Service:    svObject,
+		Deployment: depObject,
+		Service:    svcObject,
 	}, nil
 }
 

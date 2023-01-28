@@ -23,12 +23,11 @@ const (
 	VMGuestInfoUserDataKey = "guestinfo.userdata"
 )
 
-
 const (
-	VsphereUsername      = "VSPHERE_USERNAME"
-	VspherePassword      = "VSPHERE_PASSWORD"
-	VsphereServer        = "VSPHERE_SERVER"
-	VsphereDataCenter    = "VSPHERE_DATACENTER"
+	VsphereUsername   = "VSPHERE_USERNAME"
+	VspherePassword   = "VSPHERE_PASSWORD"
+	VsphereServer     = "VSPHERE_SERVER"
+	VsphereDataCenter = "VSPHERE_DATACENTER"
 )
 
 // DefaultClient dafaults vc client

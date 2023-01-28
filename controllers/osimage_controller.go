@@ -130,7 +130,8 @@ func (r *OSImageReconciler) checkAssetsDeployment(ctx context.Context, cmap *con
 		imagebuilder,
 	)
 
-	// Manage the configuration based on mgmt parameters
+	// Manage the configuration based on mgmt parameters and specs
+	// this configMap will be mounted in the Job as a volume.
 	ic, err := settings.GenerateJSONConfig(cmap)
 	if err != nil {
 		return err

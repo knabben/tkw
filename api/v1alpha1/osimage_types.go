@@ -22,24 +22,24 @@ import (
 
 // OSImageSpec defines the desired state of OSImage
 type OSImageSpec struct {
-	WindowsISOPath      string `json:"windowsISOPath"`
-	VMToolsPath         string `json:"vmtoolsPath"`
+	WindowsISOPath string `json:"windowsISOPath"`
+	VMToolsPath    string `json:"vmtoolsPath"`
 
 	// +kubebuilder:default=dc0
 	// +kubebuilder:validation:Optional
-	VsphereDatacenter   string `json:"vsphereDatacenter"`
+	VsphereDatacenter string `json:"vsphereDatacenter"`
 
 	// +kubebuilder:default=folder0
 	// +kubebuilder:validation:Optional
-	VSphereFolder       string `json:"vsphereFolder"`
+	VSphereFolder string `json:"vsphereFolder"`
 
 	// +kubebuilder:default=sharedVmfs-0
 	// +kubebuilder:validation:Optional
-	VSphereDataStore    string `json:"vsphereDatastore"`
+	VSphereDataStore string `json:"vsphereDatastore"`
 
 	// +kubebuilder:default=VM Network
 	// +kubebuilder:validation:Optional
-	VSphereNetwork      string `json:"vsphereNetwork"`
+	VSphereNetwork string `json:"vsphereNetwork"`
 
 	// +kubebuilder:default=rp0
 	// +kubebuilder:validation:Optional
@@ -47,13 +47,13 @@ type OSImageSpec struct {
 
 	// +kubebuilder:default=cluster0
 	// +kubebuilder:validation:Optional
-	VSphereCluster      string `json:"vsphereCluster"`
+	VSphereCluster string `json:"vsphereCluster"`
 }
 
 // OSImageStatus defines the observed state of OSImage
 type OSImageStatus struct {
 	// OSTemplates are the OVA templates in the vSphere
-	OSTemplates   []OSImageTemplates `json:"templates"`
+	OSTemplates []OSImageTemplates `json:"templates"`
 
 	// Conditions holds a list of internal conditions of the operator
 	Conditions []metav1.Condition `json:"conditions"`

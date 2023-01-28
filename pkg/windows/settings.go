@@ -41,7 +41,7 @@ type WindowsConfiguration struct {
 	PauseImage                           string `json:"pause_image"`
 	Prepull                              string `json:"prepull"`
 	AdditionalPrepullImages              string `json:"additional_prepull_images"`
-	AdditionalDownloadFiles               string `json:"additional_download_files"`
+	AdditionalDownloadFiles              string `json:"additional_download_files"`
 	AdditionalExecutables                string `json:"additional_executables"`
 	AdditionalExecutablesDestinationPath string `json:"additional_executables_destination_path"`
 	AdditionalExecutablesList            string `json:"additional_executables_list"`
@@ -89,7 +89,7 @@ func (w *WindowsSettings) GenerateJSONConfig(mapper *config.Mapper) ([]byte, err
 	w.WindowsConfiguration.Runtime = "containerd"
 	w.WindowsConfiguration.ConvertToTemplate = "true"
 
-	// todo(knabben): pass it to paremeters
+	// todo(knabben): pass it via parameters on spec
 	kubernetesVersion := "v1.23.8"
 	w.WindowsConfiguration.WindowsUpdatesCategories = "CriticalUpdates SecurityUpdates UpdateRollups"
 	w.WindowsConfiguration.UnattendTimezone = "GMT Standard Time"
