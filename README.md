@@ -67,6 +67,11 @@ make install
 make run
 ```
 
+Use tilt for automatic reload based on changes:
+```sh
+make tilt
+```
+
 **NOTE:** You can also run this in one step by running: `make install run`
 
 ### Modifying the API definitions
