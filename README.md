@@ -1,15 +1,18 @@
-# tkw
-// TODO(user): Add simple overview of use/purpose
+# Image Builder OVA Windows
 
-## Description
-// TODO(user): An in-depth paragraph about your project and overview of use
+This controller builds a new Windows OVA template using the [image builder](https//sigs.k8s.io/image-builder) project.
+It uses the image-builder and burrito (windows-resource-bundle) to provide the required binaries for your plain installation.
+This works fully on airgap and Internet restricted environments, all it's needed is to run the controller on a TKG
+cluster and the controller will figure out the configurations required to build the image, you can still specify
+and overwrite any parameter.
 
 ## Getting Started
-You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
-**Note:** Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
+
+You’ll need a Tanzu Kubernetes Grid cluster to run against. This will be available as a Tanzu package on next PR.
 
 ### Running on the cluster
-1. Install Instances of Custom Resources:
+
+1. Install Instances of Custom Resources, you can install the CR from the samples folder, change any parameter from the API spec:
 
 ```sh
 kubectl apply -f config/samples/
@@ -42,7 +45,8 @@ make undeploy
 ```
 
 ## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
+
+Run, test and open a PR or issues with a detailed procedure to replicate
 
 ### How it works
 This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
@@ -50,7 +54,7 @@ This project aims to follow the Kubernetes [Operator pattern](https://kubernetes
 It uses [Controllers](https://kubernetes.io/docs/concepts/architecture/controller/) 
 which provides a reconcile function responsible for synchronizing resources untile the desired state is reached on the cluster 
 
-### Test It Out
+### Development
 1. Install the CRDs into the cluster:
 
 ```sh
